@@ -1,5 +1,8 @@
 // lib/features/auth/mnemonic_screen.dart
 
+import 'package:digi_players/core/did/did_auth.dart';
+import 'package:digi_players/core/storage/secure_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +17,7 @@ class MnemonicScreen extends StatefulWidget {
 
 class _MnemonicScreenState extends State<MnemonicScreen> {
   bool _confirmed = false;
+  bool _isAuthenticating = false;
 
   /// 随机选 3 个位置让用户验证，防止跳过不看
   late final List<int> _quizIndices;
@@ -28,6 +32,7 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
     for (final i in _quizIndices) {
       _controllers[i] = TextEditingController();
     }
+    setState(() => _isAuthenticating = SecureStorage.isAuthenticating);
   }
 
   @override
@@ -44,15 +49,47 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
     return true;
   }
 
-  void _onConfirm() {
+  // 替换原来的 _onConfirm 方法
+
+  Future<void> _onConfirm() async {
     if (!_verifyInputs()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('有单词不正确，请检查')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('有单词不正确，请检查')));
       return;
     }
-    // 验证通过，跳转主界面（Part B 联调后端后再接登录流程）
-    context.go('/home');
+
+    // 显示 loading
+    setState(() => _isAuthenticating = true);
+
+    try {
+      final result = await DIDAuth.authenticate();
+
+      if (mounted) {
+        // isNewUser == true 是首次注册，后期可跳新手引导
+        context.go('/home');
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        final data = e.response?.data;
+        final msg = switch (data) {
+          Map<String, dynamic>() => (data['error'] ?? data['message'])?.toString(),
+          String() => data,
+          _ => null,
+        } ?? '网络错误，请重试';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('认证失败：$msg')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('错误：$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isAuthenticating = false);
+    }
   }
 
   @override
@@ -114,9 +151,9 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
                 Clipboard.setData(
                   ClipboardData(text: widget.mnemonic.join(' ')),
                 );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已复制到剪贴板')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
               },
               icon: const Icon(Icons.copy, size: 16),
               label: const Text('复制助记词'),
@@ -145,8 +182,14 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
 
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: _onConfirm,
-              child: const Text('我已抄写完毕，进入应用'),
+              onPressed: (_isAuthenticating) ? null : _onConfirm,
+              child: _isAuthenticating
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('我已抄写完毕，进入应用'),
             ),
           ],
         ),

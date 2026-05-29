@@ -12,10 +12,13 @@ class SecureStorage {
   );
 
   // ── Key 常量 ──────────────────────────────────
-  static const _keyPrivateKey   = 'dp_private_key';
-  static const _keyPublicKey    = 'dp_public_key';
-  static const _keyDID          = 'dp_did';
-  static const _keyJWT          = 'dp_jwt';
+  static const _keyPrivateKey = 'dp_private_key';
+  static const _keyPublicKey = 'dp_public_key';
+  static const _keyDID = 'dp_did';
+  static const _keyJWT = 'dp_jwt';
+
+  // 同时在 State 类中添加状态变量
+  static bool isAuthenticating = false;
 
   // ── DID 身份存取 ──────────────────────────────
 
@@ -26,14 +29,8 @@ class SecureStorage {
     required String did,
   }) async {
     await Future.wait([
-      _storage.write(
-        key: _keyPrivateKey,
-        value: base64Encode(privateKeyBytes),
-      ),
-      _storage.write(
-        key: _keyPublicKey,
-        value: base64Encode(publicKeyBytes),
-      ),
+      _storage.write(key: _keyPrivateKey, value: base64Encode(privateKeyBytes)),
+      _storage.write(key: _keyPublicKey, value: base64Encode(publicKeyBytes)),
       _storage.write(key: _keyDID, value: did),
     ]);
   }
