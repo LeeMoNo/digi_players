@@ -1,5 +1,5 @@
-import 'package:digi_players/core/storage/secure_storage.dart';
-import 'package:digi_players/features/HomeScreen.dart';
+import 'package:digi_players/features/home/fraud_screen.dart';
+import 'package:digi_players/features/home/home_screen.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
@@ -31,7 +31,11 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/recover',
         builder: (context, state) => const RecoverScreen(),
       ),
-      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/home/fraud',
+        builder: (context, state) => fraudScreenFromState(state),
+      ),
       GoRoute(path: '/learn', builder: (_, __) => const LearnHomeScreen()),
       GoRoute(
         path: '/chapter/:id',
