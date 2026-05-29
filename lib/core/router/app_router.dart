@@ -1,3 +1,6 @@
+import 'package:digi_players/features/games/antiscam_game/antiscam_screen.dart';
+import 'package:digi_players/features/games/games_home_screen.dart';
+import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
 import 'package:digi_players/features/home/fraud_screen.dart';
 import 'package:digi_players/features/home/home_screen.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
@@ -45,6 +48,12 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/quiz/:id',
         builder: (_, s) => QuizScreen(chapterId: s.pathParameters['id']!),
       ),
+      GoRoute(path: '/games', builder: (_, __) => const GamesHomeScreen()),
+      GoRoute(path: '/game/hash', builder: (_, __) => const HashGameScreen()),
+      GoRoute(
+        path: '/game/antiscam',
+        builder: (_, __) => const AntiscamScreen(),
+      ),
     ],
   );
 }
@@ -60,7 +69,6 @@ class RecoverScreen extends StatelessWidget {
     );
   }
 }
-
 
 class _RouteErrorPage extends StatelessWidget {
   const _RouteErrorPage({required this.message});

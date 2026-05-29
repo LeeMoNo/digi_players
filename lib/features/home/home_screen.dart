@@ -36,6 +36,8 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 32),
           const FlowOverviewSection(),
           const SizedBox(height: 32),
+          const GamesEntrySection(),
+          const SizedBox(height: 32),
           const LearnMapSection(),
           const SizedBox(height: 32),
           const ExternalLinksSection(),

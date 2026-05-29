@@ -502,3 +502,40 @@ class ExternalLinksSection extends StatelessWidget {
     );
   }
 }
+
+class GamesEntrySection extends StatelessWidget {
+  const GamesEntrySection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const HomeSectionTitle(
+          title: '游戏',
+          subtitle: '用小游戏把概念练熟（章节解锁）',
+        ),
+        Card(
+          child: ListTile(
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.sports_esports_outlined,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+            title: const Text('进入游戏大厅'),
+            subtitle: const Text('哈希碰碰乐 · 反诈识别训练营'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/games'),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -216,8 +216,13 @@ abstract final class HomeContent {
   // ── 发展年史 ─────────────────────────────────────
   static const timelineEvents = [
     TimelineEvent(
+      yearMonth: '1998-xx',
+      title: 'Wei Dai 提出 B-money（加密匿名、分布式电子现金设想）',
+      type: TimelineEventType.tech,
+    ),
+    TimelineEvent(
       yearMonth: '2008-10',
-      title: '比特币白皮书发布',
+      title: 'Satoshi Nakamoto 发布《Bitcoin: A Peer-to-Peer Electronic Cash System》',
       related: 'BTC',
       type: TimelineEventType.tech,
     ),

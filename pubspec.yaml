@@ -35,6 +35,9 @@ dependencies:
 
   # 密码学
   cryptography: ^2.7.0
+   # 加密
+  crypto: ^3.0.3
+  
   bip39: ^1.0.6
   flutter_secure_storage: ^9.0.0
 
