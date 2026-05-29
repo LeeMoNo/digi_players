@@ -3,18 +3,12 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'did_generator.dart';
+import '../config/app_config.dart';
 import '../storage/secure_storage.dart';
 
 class DIDAuth {
-  // 本地开发用 localhost，部署后换成 workers 域名
-  // 建议放到 flutter 的 --dart-define 或 env 配置里
-  static const _baseUrl = String.fromEnvironment(
-    'WORKERS_BASE_URL',
-    defaultValue: 'http://localhost:8787',
-  );
-
   static final _dio = Dio(BaseOptions(
-    baseUrl: _baseUrl,
+    baseUrl: AppConfig.workersBaseUrl,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
   ));

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/router/app_router.dart';
 import 'core/storage/secure_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
   final hasIdentity = await SecureStorage.hasIdentity();
   final initialLocation = hasIdentity ? '/home' : '/register';
 

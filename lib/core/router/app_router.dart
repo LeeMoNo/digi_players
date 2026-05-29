@@ -1,4 +1,8 @@
 import 'package:digi_players/core/storage/secure_storage.dart';
+import 'package:digi_players/features/HomeScreen.dart';
+import 'package:digi_players/features/learn/chapter_screen.dart';
+import 'package:digi_players/features/learn/learn_home_screen.dart';
+import 'package:digi_players/features/learn/quiz_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,9 +22,7 @@ GoRouter createAppRouter({required String initialLocation}) {
         builder: (context, state) {
           final extra = state.extra;
           if (extra is! List<String> || extra.length != 12) {
-            return const _RouteErrorPage(
-              message: '助记词参数无效，请重新创建身份。',
-            );
+            return const _RouteErrorPage(message: '助记词参数无效，请重新创建身份。');
           }
           return MnemonicScreen(mnemonic: extra);
         },
@@ -29,9 +31,15 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/recover',
         builder: (context, state) => const RecoverScreen(),
       ),
+      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+      GoRoute(path: '/learn', builder: (_, __) => const LearnHomeScreen()),
       GoRoute(
-        path: '/home',
-        builder: (context, state) => const _HomeScreen(),
+        path: '/chapter/:id',
+        builder: (_, s) => ChapterScreen(chapterId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/quiz/:id',
+        builder: (_, s) => QuizScreen(chapterId: s.pathParameters['id']!),
       ),
     ],
   );
@@ -44,38 +52,11 @@ class RecoverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('恢复身份')),
-      body: const Center(
-        child: Text('Recover 流程待实现'),
-      ),
+      body: const Center(child: Text('Recover 流程待实现')),
     );
   }
 }
 
-class _HomeScreen extends StatelessWidget {
-  const _HomeScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Digi Players')),
-      body: Center(
-        child: Column(
-          children: [
-            Text('已进入主页面'),
-            TextButton(
-              onPressed: () async {
-                // 临时调试用，确认 DID 已正确存储
-                var did = await SecureStorage.getDID();
-                debugPrint('MY DID: $did');
-                // 输出示例：MY DID: did:key:z6MkhaXgBZDvotDkL5257fai...
-              }, 
-              child: Text('确认 DID 已正确存储')),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _RouteErrorPage extends StatelessWidget {
   const _RouteErrorPage({required this.message});
