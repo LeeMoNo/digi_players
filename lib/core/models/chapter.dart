@@ -88,11 +88,15 @@ class ChapterDetail {
   });
 
   factory ChapterDetail.fromJson(Map<String, dynamic> j) {
-    final quiz = j['quiz'] as Map<String, dynamic>;
+    final quiz = Map<String, dynamic>.from(j['quiz'] as Map);
     return ChapterDetail(
       chapterId:         j['chapter_id'],
-      cards:             (j['cards'] as List).map((c) => CardItem.fromJson(c)).toList(),
-      quizQuestions:     (quiz['questions'] as List).map((q) => QuizQuestion.fromJson(q)).toList(),
+      cards:             (j['cards'] as List)
+          .map((c) => CardItem.fromJson(Map<String, dynamic>.from(c as Map)))
+          .toList(),
+      quizQuestions:     (quiz['questions'] as List)
+          .map((q) => QuizQuestion.fromJson(Map<String, dynamic>.from(q as Map)))
+          .toList(),
       passScore:         quiz['pass_score'],
       quizPointsAction:  quiz['points_action'],
       completionAction:  quiz['completion_action'],

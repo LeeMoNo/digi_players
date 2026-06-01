@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/chapter.dart';
+import '../../core/utils/json_map.dart';
 
 class LearnRepository {
   static const _box = 'learn_progress';
@@ -14,10 +15,13 @@ class LearnRepository {
   Future<ChapterDetail> fetchChapterDetail(String chapterId) async {
     final box   = await Hive.openBox(_box);
     final cache = box.get('chapter_json_$chapterId');
-    if (cache != null) return ChapterDetail.fromJson(Map<String, dynamic>.from(cache));
+    if (cache != null) {
+      return ChapterDetail.fromJson(deepJsonMap(cache));
+    }
     final res = await ApiClient.dio.get('/content/chapter/$chapterId');
-    await box.put('chapter_json_$chapterId', res.data);
-    return ChapterDetail.fromJson(res.data);
+    final json = deepJsonMap(res.data);
+    await box.put('chapter_json_$chapterId', json);
+    return ChapterDetail.fromJson(json);
   }
 
   Future<Set<String>> getReadCards() async {

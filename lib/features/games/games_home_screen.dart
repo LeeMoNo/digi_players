@@ -19,13 +19,13 @@ const _games = [
   _GameEntry(
     id: 'game_hash', title: '哈希碰碰乐',
     description: '拨动 Nonce，让哈希开头出现足够多的零，感受真实挖矿难度',
-    route: '/game/hash', requiresChapter: 'ch_001',
+    route: '/games/hash', requiresChapter: 'ch_001',
     icon: Icons.tag, color: Colors.teal,
   ),
   _GameEntry(
     id: 'game_antiscam', title: '反诈识别训练营',
     description: '10 道真实币圈套路题，测试你的反诈能力',
-    route: '/game/antiscam', requiresChapter: 'ch_002',
+    route: '/games/antiscam', requiresChapter: 'ch_002',
     icon: Icons.shield, color: Colors.orange,
   ),
 ];

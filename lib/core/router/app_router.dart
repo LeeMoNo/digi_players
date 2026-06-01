@@ -2,10 +2,12 @@ import 'package:digi_players/features/games/antiscam_game/antiscam_screen.dart';
 import 'package:digi_players/features/games/games_home_screen.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
 import 'package:digi_players/features/home/fraud_screen.dart';
-import 'package:digi_players/features/home/home_screen.dart';
+import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
+import 'package:digi_players/features/points/profile_screen.dart';
+import 'package:digi_players/features/square/square_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,25 +36,52 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/recover',
         builder: (context, state) => const RecoverScreen(),
       ),
-      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
-      GoRoute(
-        path: '/home/fraud',
-        builder: (context, state) => fraudScreenFromState(state),
-      ),
-      GoRoute(path: '/learn', builder: (_, __) => const LearnHomeScreen()),
-      GoRoute(
-        path: '/chapter/:id',
-        builder: (_, s) => ChapterScreen(chapterId: s.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/quiz/:id',
-        builder: (_, s) => QuizScreen(chapterId: s.pathParameters['id']!),
-      ),
-      GoRoute(path: '/games', builder: (_, __) => const GamesHomeScreen()),
-      GoRoute(path: '/game/hash', builder: (_, __) => const HashGameScreen()),
-      GoRoute(
-        path: '/game/antiscam',
-        builder: (_, __) => const AntiscamScreen(),
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/learn',
+            builder: (_, __) => const LearnHomeScreen(),
+            routes: [
+              GoRoute(
+                path: 'fraud',
+                builder: (context, state) => fraudScreenFromState(state),
+              ),
+              GoRoute(
+                path: 'chapter/:id',
+                builder: (_, s) =>
+                    ChapterScreen(chapterId: s.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'quiz/:id',
+                builder: (_, s) =>
+                    QuizScreen(chapterId: s.pathParameters['id']!),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/games',
+            builder: (_, __) => const GamesHomeScreen(),
+            routes: [
+              GoRoute(
+                path: 'hash',
+                builder: (_, __) => const HashGameScreen(),
+              ),
+              GoRoute(
+                path: 'antiscam',
+                builder: (_, __) => const AntiscamScreen(),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (_, __) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/square',
+            builder: (_, __) => const SquareScreen(),
+          ),
+        ],
       ),
     ],
   );

@@ -180,7 +180,7 @@ class _ScamCard extends StatelessWidget {
   }
 }
 
-/// 从首页/时间线跳转时可带 query：/home/fraud?scam=rug_pull
+/// 从学习页/时间线跳转时可带 query：/learn/fraud?scam=rug_pull
 FraudScreen fraudScreenFromState(GoRouterState state) {
   return FraudScreen(highlightScamId: state.uri.queryParameters['scam']);
 }

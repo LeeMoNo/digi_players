@@ -67,7 +67,7 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
 
       if (mounted) {
         // isNewUser == true 是首次注册，后期可跳新手引导
-        context.go('/home');
+        context.go('/learn');
       }
     } on DioException catch (e) {
       if (mounted) {

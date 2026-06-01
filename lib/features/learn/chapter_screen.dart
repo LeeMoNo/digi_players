@@ -43,7 +43,7 @@ class _State extends State<ChapterScreen> {
         title: Text('${_index + 1} / ${_detail!.cards.length}'),
         actions: [
           TextButton(
-            onPressed: () => context.push('/quiz/${widget.chapterId}'),
+            onPressed: () => context.push('/learn/quiz/${widget.chapterId}'),
             child: const Text('跳到测验'),
           ),
         ],
@@ -85,7 +85,7 @@ class _State extends State<ChapterScreen> {
                 if (_index < _detail!.cards.length - 1) {
                   setState(() => _index++);
                 } else {
-                  context.push('/quiz/${widget.chapterId}');
+                  context.push('/learn/quiz/${widget.chapterId}');
                 }
               },
               child: Text(isLast ? '完成阅读，进入测验' : '已读，下一张'),

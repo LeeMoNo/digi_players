@@ -112,7 +112,7 @@ class _State extends State<QuizScreen> {
               if (!passed) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => context.replace('/quiz/${widget.chapterId}'),
+                  onPressed: () => context.replace('/learn/quiz/${widget.chapterId}'),
                   child: const Text('重新测验'),
                 ),
               ],

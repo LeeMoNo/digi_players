@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/models/chapter.dart';
+import '../home/data/home_content.dart';
+import '../home/widgets/home_widgets.dart';
 import 'learn_repository.dart';
 
 class LearnHomeScreen extends StatefulWidget {
@@ -33,17 +36,46 @@ class _State extends State<LearnHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('学习')),
-      body: _chapters == null
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _chapters!.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) {
-                final c = _chapters![i];
-                final unlocked  = _unlocked(c);
-                final completed = _completed.contains(c.chapterId);
-                return Card(
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            HomeContent.tagline,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 32),
+          const FraudSummarySection(),
+          const SizedBox(height: 32),
+          const TimelineSection(),
+          const SizedBox(height: 32),
+          const GlossarySection(),
+          const SizedBox(height: 32),
+          const FlowOverviewSection(),
+          const SizedBox(height: 32),
+          const LearnMapSection(),
+          const SizedBox(height: 32),
+          const ExternalLinksSection(),
+          const SizedBox(height: 32),
+          Text('学程章节', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          if (_chapters == null)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_chapters!.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: Text('暂无章节内容')),
+            )
+          else
+            ...List.generate(_chapters!.length, (i) {
+              final c = _chapters![i];
+              final unlocked = _unlocked(c);
+              final completed = _completed.contains(c.chapterId);
+              return Padding(
+                padding: EdgeInsets.only(bottom: i < _chapters!.length - 1 ? 12 : 0),
+                child: Card(
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: completed ? Colors.green
@@ -67,12 +99,15 @@ class _State extends State<LearnHomeScreen> {
                         ? const Icon(Icons.chevron_right)
                         : const Icon(Icons.lock_outline, color: Colors.grey),
                     onTap: unlocked
-                        ? () => context.push('/chapter/${c.chapterId}')
+                        ? () => context.push('/learn/chapter/${c.chapterId}')
                         : null,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            }),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }

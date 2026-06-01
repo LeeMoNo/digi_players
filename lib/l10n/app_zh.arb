@@ -1,5 +1,17 @@
 {
   "@@locale": "zh",
   "appTitle": "数字玩家",
-  "homeTitle": "数字玩家主页"
+  "homeTitle": "数字玩家主页",
+  "profileTitle":       "我的",
+  "squareTitle":        "数民广场",
+  "learnTitle":         "学习",
+  "gamesTitle":         "游戏",
+  "totalPoints":        "累计积分",
+  "globalRank":         "全球排名",
+  "badgesTitle":        "徽章",
+  "leaderboardTitle":   "排行榜 Top 20",
+  "squareComingSoon":   "广场正在建设中",
+  "squareComingDesc":   "Phase 2 将开放去中心化实时讨论区",
+  "copyDID":            "DID 已复制",
+  "youTag":             "我"
 }

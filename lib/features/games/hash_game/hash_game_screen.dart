@@ -1,6 +1,7 @@
 // lib/features/games/hash_game/hash_game_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
@@ -73,31 +74,31 @@ class _State extends State<HashGameScreen> {
   Future<void> _submitScore() async {
     setState(() { _loading = true; _gameDone = true; });
 
-    if (_seed == null) {
-      setState(() => _loading = false);
-      return; // 没有 seed，跳过积分上报
+    if (_seed != null) {
+      try {
+        final did       = await SecureStorage.getDID() ?? '';
+        final resultData = _solvedNonces.join(',');
+        final proof     = buildProofHash(
+          did:        did,
+          actionKey:  'game_hash_complete',
+          seed:       _seed!,
+          resultData: resultData,
+        );
+
+        await ApiClient.dio.post('/points/award', data: {
+          'action_key':  'game_hash_complete',
+          'proof_hash':  proof,
+          'result_data': resultData,
+        });
+      } catch (_) {
+        // 上报失败静默处理
+      }
     }
 
-    try {
-      final did       = await SecureStorage.getDID() ?? '';
-      final resultData = _solvedNonces.join(',');
-      final proof     = buildProofHash(
-        did:        did,
-        actionKey:  'game_hash_complete',
-        seed:       _seed!,
-        resultData: resultData,
-      );
+    final box = await Hive.openBox('learn_progress');
+    await box.put('game_done_game_hash', true);
 
-      await ApiClient.dio.post('/points/award', data: {
-        'action_key':  'game_hash_complete',
-        'proof_hash':  proof,
-        'result_data': resultData,
-      });
-    } catch (_) {
-      // 上报失败静默处理
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    if (mounted) setState(() => _loading = false);
   }
 
   // ── 哈希着色：把开头的零变绿色 ────────────────────

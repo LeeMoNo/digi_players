@@ -9,7 +9,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   final hasIdentity = await SecureStorage.hasIdentity();
-  final initialLocation = hasIdentity ? '/home' : '/register';
+  final initialLocation = hasIdentity ? '/learn' : '/register';
 
   runApp(DigiPlayersApp(initialLocation: initialLocation));
 }

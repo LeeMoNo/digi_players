@@ -64,7 +64,7 @@ class FraudSummarySection extends StatelessWidget {
           title: '警防诈骗',
           subtitle: '安全清单与常见套路',
           trailing: TextButton(
-            onPressed: () => context.push('/home/fraud'),
+            onPressed: () => context.push('/learn/fraud'),
             child: const Text('查看全部'),
           ),
         ),
@@ -109,7 +109,7 @@ class FraudSummarySection extends StatelessWidget {
                 width: 200,
                 child: Card(
                   child: InkWell(
-                    onTap: () => context.push('/home/fraud?scam=${scam.id}'),
+                    onTap: () => context.push('/learn/fraud?scam=${scam.id}'),
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
@@ -240,7 +240,7 @@ class _TimelineTile extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         onPressed: () => context.push(
-                          '/home/fraud?scam=${event.fraudScamId}',
+                          '/learn/fraud?scam=${event.fraudScamId}',
                         ),
                         child: const Text('了解相关诈骗套路 →'),
                       ),
@@ -309,7 +309,7 @@ class GlossarySection extends StatelessWidget {
                       ),
                     ),
                 TextButton(
-                  onPressed: () => context.push('/home/fraud?scam=rug_pull'),
+                  onPressed: () => context.push('/learn/fraud?scam=rug_pull'),
                   child: const Text('了解 Rug Pull / 庞氏盘 →'),
                 ),
               ],
@@ -400,9 +400,9 @@ class FlowOverviewSection extends StatelessWidget {
                         ),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => context.push('/learn'),
-                            child: const Text('去学程'),
+                          child: Text(
+                            '见下方学程章节',
+                            style: Theme.of(context).textTheme.labelSmall,
                           ),
                         ),
                       ],
@@ -434,23 +434,19 @@ class LearnMapSection extends StatelessWidget {
             return SizedBox(
               width: (MediaQuery.sizeOf(context).width - 48) / 2,
               child: Card(
-                child: InkWell(
-                  onTap: () => context.push('/learn'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e.title,
-                            style: const TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text(e.description,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(e.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(e.description,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                    ],
                   ),
                 ),
               ),
@@ -496,43 +492,6 @@ class ExternalLinksSection extends StatelessWidget {
               trailing: const Icon(Icons.open_in_new),
               onTap: () => _openUrl(context, r.url),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class GamesEntrySection extends StatelessWidget {
-  const GamesEntrySection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const HomeSectionTitle(
-          title: '游戏',
-          subtitle: '用小游戏把概念练熟（章节解锁）',
-        ),
-        Card(
-          child: ListTile(
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.sports_esports_outlined,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-            ),
-            title: const Text('进入游戏大厅'),
-            subtitle: const Text('哈希碰碰乐 · 反诈识别训练营'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/games'),
           ),
         ),
       ],

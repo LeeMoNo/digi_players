@@ -1,5 +1,17 @@
 {
   "@@locale": "en",
   "appTitle": "Digi Players",
-  "homeTitle": "Digi Players Home"
+  "homeTitle": "Digi Players Home",
+  "profileTitle":       "My",
+  "squareTitle":        "Square",
+  "learnTitle":         "Learn",
+  "gamesTitle":         "Games",
+  "totalPoints":        "Total Points",
+  "globalRank":         "Global Rank",
+  "badgesTitle":        "Badges",
+  "leaderboardTitle":   "Top 20 Rankings",
+  "squareComingSoon":   "Square is coming soon",
+  "squareComingDesc":   "Phase 2 will open decentralized real-time discussion area",
+  "copyDID":            "DID copied",
+  "youTag":             "Me"
 }

@@ -1,6 +1,7 @@
 // lib/features/games/antiscam_game/antiscam_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
@@ -67,6 +68,10 @@ class _State extends State<AntiscamScreen> {
           'result_data': resultData,
         });
       } catch (_) {}
+    }
+    if (passed) {
+      final box = await Hive.openBox('learn_progress');
+      await box.put('game_done_game_antiscam', true);
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -263,7 +268,7 @@ class _State extends State<AntiscamScreen> {
               if (!passed) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => context.replace('/game/antiscam'),
+                  onPressed: () => context.replace('/games/antiscam'),
                   child: const Text('再来一次'),
                 ),
               ],
