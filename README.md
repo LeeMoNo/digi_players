@@ -66,9 +66,9 @@ samples, guidance on mobile development, and a full API reference.
 
 
 
-
-
-
+后续开发：
+加入一个各种稳定币的简介。
+这些概念是联通的，而且有出现时间顺序，我们按照它们的出现时间来学习就好。比如那个概念是些出来的，那个概念是最新发布的
 
 
 

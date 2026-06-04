@@ -1,6 +1,8 @@
 import 'package:digi_players/features/games/antiscam_game/antiscam_screen.dart';
+import 'package:digi_players/features/games/block_puzzle/block_puzzle_screen.dart';
 import 'package:digi_players/features/games/games_home_screen.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
+import 'package:digi_players/features/games/p2p_game/p2p_game_screen.dart';
 import 'package:digi_players/features/home/fraud_screen.dart';
 import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
@@ -77,30 +79,32 @@ GoRouter createAppRouter({required String initialLocation}) {
             path: '/games',
             builder: (_, __) => const GamesHomeScreen(),
             routes: [
-              GoRoute(
-                path: 'hash',
-                builder: (_, __) => const HashGameScreen(),
-              ),
+              GoRoute(path: 'hash', builder: (_, __) => const HashGameScreen()),
               GoRoute(
                 path: 'antiscam',
                 builder: (_, __) => const AntiscamScreen(),
               ),
             ],
           ),
+          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/square', builder: (_, __) => const SquareScreen()),
           GoRoute(
-            path: '/profile',
-            builder: (_, __) => const ProfileScreen(),
+            path: '/settings',
+            builder: (_, __) => const SettingsScreen(),
           ),
           GoRoute(
-            path: '/square',
-            builder: (_, __) => const SquareScreen(),
+            path: '/settings/nickname',
+            builder: (_, __) => const NicknameScreen(),
           ),
-          GoRoute(path: '/settings',
-            builder: (_, __) => const SettingsScreen()),
-          GoRoute(path: '/settings/nickname',
-            builder: (_, __) => const NicknameScreen()),
-          GoRoute(path: '/settings/mnemonic',
-            builder: (_, __) => const MnemonicViewScreen()),
+          GoRoute(
+            path: '/settings/mnemonic',
+            builder: (_, __) => const MnemonicViewScreen(),
+          ),
+          GoRoute(
+            path: '/game/block-puzzle',
+            builder: (_, __) => const BlockPuzzleScreen(),
+          ),
+          GoRoute(path: '/game/p2p', builder: (_, __) => const P2PGameScreen()),
         ],
       ),
     ],

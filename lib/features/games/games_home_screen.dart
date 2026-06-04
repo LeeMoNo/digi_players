@@ -28,6 +28,18 @@ const _games = [
     route: '/games/antiscam', requiresChapter: 'ch_002',
     icon: Icons.shield, color: Colors.orange,
   ),
+  _GameEntry(
+    id: 'game_block', title: '区块链拼图',
+    description: '排列被打乱的区块，修复被篡改的交易数据',
+    route: '/game/block-puzzle', requiresChapter: 'ch_001',
+    icon: Icons.extension, color: Colors.indigo,
+  ),
+  _GameEntry(
+    id: 'game_p2p', title: 'P2P 节点模拟器',
+    description: '扮演网络节点，把消息传遍整个 P2P 网络',
+    route: '/game/p2p', requiresChapter: 'ch_001',
+    icon: Icons.hub, color: Colors.teal,
+  ),
 ];
 
 class GamesHomeScreen extends StatefulWidget {

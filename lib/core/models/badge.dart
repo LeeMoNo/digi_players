@@ -61,4 +61,18 @@ const allBadges = [
     icon: Icons.military_tech,
     color: Colors.amber,
   ),
+  BadgeItem(
+    id: 'badge_block_game',
+    name: '链式思维者',
+    description: '通关区块链拼图',
+    icon: Icons.extension,
+    color: Colors.indigo,
+  ),
+  BadgeItem(
+    id: 'badge_p2p_game',
+    name: '网络节点',
+    description: '通关 P2P 节点模拟器',
+    icon: Icons.hub,
+    color: Colors.teal,
+  ),
 ];

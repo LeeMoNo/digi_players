@@ -56,6 +56,14 @@ class ProfileRepository {
       unlocked.add('badge_antiscam');
     }
 
+    //徽章补充：完成区块链拼图和P2P节点模拟器游戏后解锁
+    if (box.get('game_done_game_block', defaultValue: false)) {
+      unlocked.add('badge_block_game');
+    }
+    if (box.get('game_done_game_p2p', defaultValue: false)) {
+      unlocked.add('badge_p2p_game');
+    }
+
     // badge_all_phase1：以上五枚全部解锁
     const phase1Required = {
       'badge_did', 'badge_ch001', 'badge_ch002',
