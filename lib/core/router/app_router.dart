@@ -7,12 +7,26 @@ import 'package:digi_players/features/learn/chapter_screen.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
 import 'package:digi_players/features/points/profile_screen.dart';
+import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
+import 'package:digi_players/features/settings/nickname_screen.dart';
+import 'package:digi_players/features/settings/settings_screen.dart';
 import 'package:digi_players/features/square/square_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/mnemonic_screen.dart';
 import '../../features/auth/register_screen.dart';
+
+final initialLocationProvider = Provider<String>((_) => '/learn');
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final router = createAppRouter(
+    initialLocation: ref.read(initialLocationProvider),
+  );
+  ref.onDispose(router.dispose);
+  return router;
+});
 
 GoRouter createAppRouter({required String initialLocation}) {
   return GoRouter(
@@ -81,6 +95,12 @@ GoRouter createAppRouter({required String initialLocation}) {
             path: '/square',
             builder: (_, __) => const SquareScreen(),
           ),
+          GoRoute(path: '/settings',
+            builder: (_, __) => const SettingsScreen()),
+          GoRoute(path: '/settings/nickname',
+            builder: (_, __) => const NicknameScreen()),
+          GoRoute(path: '/settings/mnemonic',
+            builder: (_, __) => const MnemonicViewScreen()),
         ],
       ),
     ],

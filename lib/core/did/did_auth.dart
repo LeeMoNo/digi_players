@@ -56,4 +56,11 @@ class DIDAuth {
 
     return (jwt: jwt, isNewUser: isNewUser);
   }
+
+  /// 确保本地有可用 JWT（启动时或 401 后调用）
+  static Future<String> ensureSession() async {
+    final existing = await SecureStorage.getJWT();
+    if (existing != null && existing.isNotEmpty) return existing;
+    return (await authenticate()).jwt;
+  }
 }

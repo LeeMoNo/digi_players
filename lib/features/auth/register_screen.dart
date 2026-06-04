@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/did/did_generator.dart';
 import '../../core/storage/secure_storage.dart';
-import '../../core/did/did_key_pair.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -26,9 +25,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // 2. 保存私钥到安全存储
       await SecureStorage.saveIdentity(
         privateKeyBytes: keyPair.privateKeyBytes,
-        publicKeyBytes:  keyPair.publicKeyBytes,
-        did:             keyPair.did,
+        publicKeyBytes: keyPair.publicKeyBytes,
+        did: keyPair.did,
       );
+
+      // 在 saveIdentity 调用之后，跳转之前，追加这一行：
+      await SecureStorage.saveMnemonic(keyPair.mnemonicPhrase);
 
       // 3. 跳转助记词界面（传递助记词，不传私钥）
       if (mounted) {
@@ -36,9 +38,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('生成失败：$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('生成失败：$e')));
       }
     } finally {
       if (mounted) setState(() => _isGenerating = false);

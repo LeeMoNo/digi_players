@@ -14,6 +14,7 @@ class SecureStorage {
   // ── Key 常量 ──────────────────────────────────
   static const _keyPrivateKey = 'dp_private_key';
   static const _keyPublicKey = 'dp_public_key';
+  static const _keyMnemonic = 'dp_mnemonic';
   static const _keyDID = 'dp_did';
   static const _keyJWT = 'dp_jwt';
 
@@ -79,4 +80,15 @@ class SecureStorage {
   static Future<void> clearAll() async {
     await _storage.deleteAll();
   }
+
+  /// 保存助记词（注册时调用，12个单词空格分隔）
+  static Future<void> saveMnemonic(String mnemonicPhrase) async {
+    await _storage.write(key: _keyMnemonic, value: mnemonicPhrase);
+  }
+
+  /// 读取助记词
+  static Future<String?> getMnemonic() async {
+    return _storage.read(key: _keyMnemonic);
+  }
+  
 }

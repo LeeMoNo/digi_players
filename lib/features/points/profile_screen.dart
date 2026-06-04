@@ -1,6 +1,8 @@
 // lib/features/profile/profile_screen.dart
+import 'package:digi_players/core/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/models/badge.dart';
 import '../../core/storage/secure_storage.dart';
 import 'profile_repository.dart';
@@ -18,17 +20,29 @@ class _State extends State<ProfileScreen> {
   Set<String> _unlocked  = {};
   List<Map<String, dynamic>> _rankings = [];
   bool     _loading      = true;
+  String? _nickname;
 
   @override
   void initState() { super.initState(); _load(); }
 
+  // 在 _load() 中，fetchTotalPoints 之前追加：
   Future<void> _load() async {
-    final did      = await SecureStorage.getDID();
+    final did = await SecureStorage.getDID();
+
+    // 拉取服务端档案（包含昵称）
+    String? nickname;
+    try {
+      final res = await ApiClient.dio.get('/user/profile');
+      nickname = res.data['display_name'] as String?;
+    } catch (_) {}
+
     final points   = await _repo.fetchTotalPoints();
     final unlocked = await _repo.getUnlockedBadgeIds();
     final rankings = await _repo.fetchLeaderboard();
+
     if (mounted) setState(() {
       _did      = did;
+      _nickname = nickname;   // 新增 State 变量
       _points   = points;
       _unlocked = unlocked;
       _rankings = rankings;
@@ -60,8 +74,8 @@ class _State extends State<ProfileScreen> {
         title: const Text('我的'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () { setState(() => _loading = true); _load(); },
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
           ),
         ],
       ),
@@ -98,9 +112,10 @@ class _State extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('数字游民',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(
+                                _nickname?.isNotEmpty == true ? _nickname! : '数字游民',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
                             const SizedBox(height: 4),
                             GestureDetector(
                               onTap: () {

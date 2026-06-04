@@ -48,6 +48,7 @@ dependencies:
   # 路由 & 状态
   go_router: ^13.0.0
   riverpod: ^2.5.0
+  flutter_riverpod: ^2.5.0
 
   # 本地存储
   hive_flutter: ^1.1.0

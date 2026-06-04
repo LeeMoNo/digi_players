@@ -27,6 +27,8 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        indicatorColor: Theme.of(context).colorScheme.primaryContainer,
         selectedIndex: index,
         onDestinationSelected: (i) => context.go(_tabs[i].path),
         destinations: _tabs.map((t) => NavigationDestination(
