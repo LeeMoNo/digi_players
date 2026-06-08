@@ -27,7 +27,7 @@ samples, guidance on mobile development, and a full API reference.
  
 - 注册即获得去中心化身份（DID），无需邮箱/手机号
 - 知识学习与游戏深度绑定，学完解锁关卡
-- 积分体系为未来代币发行预留通道
+- 积分体系为未来代币发行预留通道（）
 - 全程无传统服务器，Cloudflare 边缘计算
 ---
 
@@ -64,12 +64,17 @@ samples, guidance on mobile development, and a full API reference.
   └─────────┘   └───────────┘ └───────┘
 ```
 
+## 运行：
+# WebSocket 连接 URL 单独配置（注意 ws/wss 协议）
+flutter run \
+  --dart-define=WORKERS_BASE_URL=https://digiplayers-workers.xxx.workers.dev \
+  --dart-define=WORKERS_WS_URL=wss://digiplayers-workers.xxx.workers.dev
 
 
 后续开发：
 加入一个各种稳定币的简介。
 这些概念是联通的，而且有出现时间顺序，我们按照它们的出现时间来学习就好。比如那个概念是些出来的，那个概念是最新发布的
-
+发行币种，用户游戏奖励DP币，替换已有的积分（用户使用积分兑换币也行），内部币库（内部账本），用户提现的时候才真正从链上发送--设置门槛，
 
 
 

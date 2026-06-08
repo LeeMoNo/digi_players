@@ -1,5 +1,6 @@
 // lib/features/square/square_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/storage/secure_storage.dart';
 
 class SquareScreen extends StatefulWidget {
@@ -27,129 +28,119 @@ class _State extends State<SquareScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('数民广场')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 身份展示
-            if (_did != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.08),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Theme.of(context)
-                        .colorScheme.primary.withOpacity(0.2),
-                  ),
-                ),
-                child: Row(children: [
-                  const Icon(Icons.fingerprint, size: 36),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('你是一位数字游民',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 2),
-                      Text(_shortDID(_did!),
-                          style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                              color: Colors.grey)),
-                    ],
-                  ),
-                ]),
-              ),
-            const SizedBox(height: 28),
-
-            // 建设中提示
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 身份展示
+          if (_did != null)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                gradient: LinearGradient(colors: [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+                ]),
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme.primary.withOpacity(0.2),
+                ),
               ),
-              child: Column(
-                children: [
-                  Icon(Icons.construction,
-                      size: 56,
-                      color: Theme.of(context)
-                          .colorScheme.primary.withOpacity(0.5)),
-                  const SizedBox(height: 16),
-                  const Text('广场正在建设中',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Phase 2 将开放去中心化实时讨论区，\n'
-                    '基于 P2P 技术，数字游民们在这里自由交流。',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, height: 1.7),
-                  ),
-                ],
-              ),
+              child: Row(children: [
+                const Icon(Icons.fingerprint, size: 32),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('数字游民',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(_shortDID(_did!),
+                        style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: Colors.grey)),
+                  ],
+                ),
+              ]),
             ),
-            const SizedBox(height: 24),
 
-            // 话题入口占位（框架已在，内容 Phase 2 填充）
-            Text('话题分区',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            for (final topic in _topicPlaceholders)
-              _TopicPlaceholder(title: topic.$1, desc: topic.$2, icon: topic.$3),
-          ],
-        ),
+          const Text('选择话题',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+
+          for (final room in _rooms)
+            _RoomTile(room: room),
+        ],
       ),
     );
   }
 }
 
-const _topicPlaceholders = [
-  ('区块链技术', 'Layer2、共识机制、跨链桥', Icons.hub),
-  ('密码学讨论', 'ZKP、MPC、同态加密', Icons.lock),
-  ('DID 与 Web3 身份', 'VC、SSI、去中心化登录', Icons.badge),
-  ('反诈经验交流', '识骗手册、案例分析', Icons.security),
+// 房间配置
+class _RoomConfig {
+  final String id, name, description;
+  final IconData icon;
+  final Color color;
+  const _RoomConfig({
+    required this.id, required this.name,
+    required this.description,
+    required this.icon, required this.color,
+  });
+}
+
+const _rooms = [
+  _RoomConfig(
+    id: 'blockchain', name: '区块链技术',
+    description: 'Layer2、共识机制、跨链桥',
+    icon: Icons.hub, color: Colors.teal,
+  ),
+  _RoomConfig(
+    id: 'cryptography', name: '密码学讨论',
+    description: 'ZKP、MPC、同态加密',
+    icon: Icons.lock, color: Colors.indigo,
+  ),
+  _RoomConfig(
+    id: 'did', name: 'DID 与 Web3 身份',
+    description: 'VC、SSI、去中心化登录',
+    icon: Icons.badge, color: Colors.purple,
+  ),
+  _RoomConfig(
+    id: 'antiscam', name: '反诈经验交流',
+    description: '识骗手册、案例分析',
+    icon: Icons.security, color: Colors.orange,
+  ),
 ];
 
-class _TopicPlaceholder extends StatelessWidget {
-  final String title, desc;
-  final IconData icon;
-  const _TopicPlaceholder({
-    required this.title, required this.desc, required this.icon,
-  });
+class _RoomTile extends StatelessWidget {
+  final _RoomConfig room;
+  const _RoomTile({super.key, required this.room});
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(children: [
-      Icon(icon, size: 22,
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.6)),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(desc,
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
+    child: ListTile(
+      contentPadding: const EdgeInsets.all(14),
+      leading: Container(
+        width: 44, height: 44,
+        decoration: BoxDecoration(
+          color: room.color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
         ),
+        child: Icon(room.icon, color: room.color, size: 24),
       ),
-      Icon(Icons.chevron_right,
-          color: Colors.grey.shade300),
-    ]),
+      title: Text(room.name,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(room.description,
+            style: const TextStyle(fontSize: 12)),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push(
+        '/square/chat/${room.id}',
+        extra: room.name,
+      ),
+    ),
   );
 }

@@ -12,6 +12,7 @@ import 'package:digi_players/features/points/profile_screen.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
 import 'package:digi_players/features/settings/nickname_screen.dart';
 import 'package:digi_players/features/settings/settings_screen.dart';
+import 'package:digi_players/features/square/square_chat_screen.dart';
 import 'package:digi_players/features/square/square_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,6 +106,13 @@ GoRouter createAppRouter({required String initialLocation}) {
             builder: (_, __) => const BlockPuzzleScreen(),
           ),
           GoRoute(path: '/game/p2p', builder: (_, __) => const P2PGameScreen()),
+          GoRoute(
+            path: '/square/chat/:room',
+            builder: (_, state) => SquareChatScreen(
+              room: state.pathParameters['room']!,
+              roomName: state.extra as String? ?? '广场',
+            ),
+          ),
         ],
       ),
     ],
