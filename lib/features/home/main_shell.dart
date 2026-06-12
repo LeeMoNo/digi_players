@@ -2,16 +2,36 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class MainShell extends StatelessWidget {
+import '../../core/api/api_client.dart';
+
+class MainShell extends StatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
   static const _tabs = [
-    (icon: Icons.book_outlined,    activeIcon: Icons.book,    label: '学习',  path: '/learn'),
-    (icon: Icons.games_outlined,   activeIcon: Icons.games,   label: '游戏',  path: '/games'),
-    (icon: Icons.person_outlined,  activeIcon: Icons.person,  label: '我的',  path: '/profile'),
-    (icon: Icons.people_outlined,  activeIcon: Icons.people,  label: '广场',  path: '/square'),
+    (icon: Icons.book_outlined, activeIcon: Icons.book, label: '学习', path: '/learn'),
+    (icon: Icons.games_outlined, activeIcon: Icons.games, label: '游戏', path: '/games'),
+    (icon: Icons.person_outlined, activeIcon: Icons.person, label: '我的', path: '/profile'),
+    (icon: Icons.people_outlined, activeIcon: Icons.people, label: '广场', path: '/square'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _reportDailyLogin();
+  }
+
+  /// 每日登录积分；daily_cap=1 由服务端防重复，429 可忽略
+  Future<void> _reportDailyLogin() async {
+    try {
+      await ApiClient.dio.post('/points/award', data: {'action_key': 'daily_login'});
+    } catch (_) {}
+  }
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
@@ -25,16 +45,16 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final index = _currentIndex(context);
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         indicatorColor: Theme.of(context).colorScheme.primaryContainer,
         selectedIndex: index,
         onDestinationSelected: (i) => context.go(_tabs[i].path),
         destinations: _tabs.map((t) => NavigationDestination(
-          icon:          Icon(t.icon),
-          selectedIcon:  Icon(t.activeIcon),
-          label:         t.label,
+          icon: Icon(t.icon),
+          selectedIcon: Icon(t.activeIcon),
+          label: t.label,
         )).toList(),
       ),
     );
