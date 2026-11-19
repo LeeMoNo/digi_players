@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../learn/learn_path.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
@@ -17,6 +18,7 @@ class _State extends State<BlockPuzzleScreen> {
   late List<PuzzleBlock> _blocks;
   final Set<String> _markedTampered = {}; // 玩家标记为"篡改"的块 id
   bool _gameDone  = false;
+  LearnPathStep? _next;
   bool _submitted = false;
   String? _seed;
   int _seconds = 0;
@@ -78,26 +80,35 @@ class _State extends State<BlockPuzzleScreen> {
     });
 
     final passed = orderOk && tamperedOk;
-    if (passed && _seed != null) {
-      try {
-        final did        = await SecureStorage.getDID() ?? '';
-        final resultData = 'order:ok,tampered:ok,time:$_seconds';
-        final proof      = buildProofHash(
-          did:        did,
-          actionKey:  'game_block_complete',
-          seed:       _seed!,
-          resultData: resultData,
-        );
-        await ApiClient.dio.post('/points/award', data: {
-          'action_key':  'game_block_complete',
-          'proof_hash':  proof,
-          'result_data': resultData,
-        });
-        final box = await Hive.openBox('learn_progress');
-        await box.put('game_done_game_block', true);
-      } catch (_) {}
+    LearnPathStep? next;
+    if (passed) {
+      if (_seed != null) {
+        try {
+          final did        = await SecureStorage.getDID() ?? '';
+          final resultData = 'order:ok,tampered:ok,time:$_seconds';
+          final proof      = buildProofHash(
+            did:        did,
+            actionKey:  'game_block_complete',
+            seed:       _seed!,
+            resultData: resultData,
+          );
+          await ApiClient.dio.post('/points/award', data: {
+            'action_key':  'game_block_complete',
+            'proof_hash':  proof,
+            'result_data': resultData,
+          });
+        } catch (_) {}
+      }
+      final box = await Hive.openBox('learn_progress');
+      await box.put('game_done_game_block', true);
+      final progress = await readLearnPathProgress();
+      next = practiceClearDestination(practice: 'block', progress: progress);
     }
-    setState(() => _submitted = true);
+    if (!mounted) return;
+    setState(() {
+      _next = next;
+      _submitted = true;
+    });
   }
 
   String _timeStr() {
@@ -216,14 +227,20 @@ class _State extends State<BlockPuzzleScreen> {
                   style: const TextStyle(color: Colors.grey)),
               if (passed) ...[
                 const SizedBox(height: 12),
-                const Text('积分已到账 🎉',
+                const Text('进度已记下',
                     style: TextStyle(color: Colors.green)),
               ],
               const SizedBox(height: 32),
-              FilledButton(
-                onPressed: () => context.go('/games'),
-                child: const Text('返回游戏列表'),
-              ),
+              if (passed && _next != null)
+                FilledButton(
+                  onPressed: () => context.go(_next!.route),
+                  child: Text(_next!.button),
+                )
+              else
+                FilledButton(
+                  onPressed: () => context.go('/learn'),
+                  child: const Text('返回学习'),
+                ),
               if (!passed) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(

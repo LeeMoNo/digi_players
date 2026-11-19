@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/models/chapter.dart';
+import '../../core/router/app_route_observer.dart';
 import '../home/daily_task_card.dart';
 import '../home/data/home_content.dart';
-import '../home/widgets/home_widgets.dart';
+import 'learn_path.dart';
 import 'learn_repository.dart';
 
 class LearnHomeScreen extends StatefulWidget {
-  const LearnHomeScreen({super.key});
-  @override State<LearnHomeScreen> createState() => _State();
+  const LearnHomeScreen({
+    super.key,
+    this.loadChapters,
+    this.loadProgress,
+    this.dailyTask = const DailyTaskCard(),
+  });
+
+  /// 拉取章节列表。失败时继续卡改为重试。测试可替换。
+  final Future<void> Function()? loadChapters;
+
+  /// 读取六步进度。测试可替换。
+  final Future<LearnPathProgress> Function()? loadProgress;
+
+  final Widget dailyTask;
+
+  @override
+  State<LearnHomeScreen> createState() => _LearnHomeScreenState();
 }
 
-class _State extends State<LearnHomeScreen> {
+class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
   final _repo = LearnRepository();
-  List<ChapterSummary>? _chapters;
-  Set<String> _completed = {};
-  final _lang = 'zh_CN';
+  LearnPathProgress _progress = const LearnPathProgress();
+  bool _loadingChapters = true;
+  bool _chaptersReady = false;
+  bool _chaptersFailed = false;
+  ModalRoute<void>? _route;
 
   @override
   void initState() {
@@ -24,123 +41,205 @@ class _State extends State<LearnHomeScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    final chapters = await _repo.fetchChaptersList();
-    final completed = <String>{};
-    for (final c in chapters) {
-      if (await _repo.isChapterCompleted(c.chapterId)) {
-        completed.add(c.chapterId);
-      }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route != _route) {
+      if (_route != null) appRouteObserver.unsubscribe(this);
+      _route = route;
+      appRouteObserver.subscribe(this, route);
     }
-    if (mounted) {
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final progress = await (widget.loadProgress ?? readLearnPathProgress)();
+    if (!mounted) return;
+    setState(() => _progress = progress);
+
+    try {
+      final load = widget.loadChapters ??
+          () async {
+            await _repo.fetchChaptersList();
+          };
+      await load();
+      if (!mounted) return;
       setState(() {
-        _chapters = chapters;
-        _completed = completed;
+        _chaptersReady = true;
+        _chaptersFailed = false;
+        _loadingChapters = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingChapters = false;
+        if (!_chaptersReady) _chaptersFailed = true;
       });
     }
   }
 
-  bool _unlocked(ChapterSummary c) =>
-      c.requiresChapter.isEmpty || _completed.contains(c.requiresChapter);
-
-  Widget _buildChapterTile(ChapterSummary c) {
-    final unlocked = _unlocked(c);
-    final completed = _completed.contains(c.chapterId);
-
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: completed
-              ? Colors.green
-              : unlocked
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.grey,
-          child: Icon(
-            completed ? Icons.check : unlocked ? Icons.book : Icons.lock,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          c.localTitle(_lang),
-          style: TextStyle(
-            color: unlocked ? null : Colors.grey,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          unlocked ? c.localDesc(_lang) : '完成前置章节后解锁',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: unlocked
-            ? const Icon(Icons.chevron_right)
-            : const Icon(Icons.lock_outline, color: Colors.grey),
-        onTap: unlocked
-            ? () => context.push('/learn/chapter/${c.chapterId}')
-            : null,
-      ),
-    );
+  Future<void> _retry() async {
+    setState(() {
+      _loadingChapters = true;
+      _chaptersFailed = false;
+    });
+    await _load();
   }
 
   @override
   Widget build(BuildContext context) {
+    final step = nextLearnStep(_progress);
+    final catalog = learnCatalog(_progress);
+
     return Scaffold(
       appBar: AppBar(title: const Text('学习')),
       body: ListView(
+        key: const Key('learn-home-scroll'),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          const DailyTaskCard(),
-          if (_chapters == null)
-            const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else ...[
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    HomeContent.tagline,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 32),
-                  const FraudSummarySection(),
-                  const SizedBox(height: 32),
-                  const TimelineSection(),
-                  const SizedBox(height: 32),
-                  const GlossarySection(),
-                  const SizedBox(height: 32),
-                  const FlowOverviewSection(),
-                  const SizedBox(height: 32),
-                  const LearnMapSection(),
-                  const SizedBox(height: 32),
-                  const ExternalLinksSection(),
-                  const SizedBox(height: 32),
-                  Text(
-                    '学程章节',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+          _ContinueCard(
+            loading: _loadingChapters && !_chaptersReady,
+            failed: _chaptersFailed,
+            step: step,
+            onRetry: _retry,
+          ),
+          const SizedBox(height: 12),
+          widget.dailyTask,
+          const SizedBox(height: 20),
+          Text('路径', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          for (final item in catalog) ...[
+            _CatalogTile(item: item),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: const Text('资料'),
+              subtitle: const Text('年史、术语、防骗与外链'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/learn/library'),
             ),
-            if (_chapters!.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: Text('暂无章节内容')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContinueCard extends StatelessWidget {
+  const _ContinueCard({
+    required this.loading,
+    required this.failed,
+    required this.step,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final bool failed;
+  final LearnPathStep step;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = failed
+        ? '章节暂时取不到'
+        : loading
+            ? '继续'
+            : step.title;
+    final button = failed ? '重试' : step.button;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              key: const Key('continue-title'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            if (loading)
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text('正在读取章节'),
+                ],
               )
             else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                itemCount: _chapters!.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => _buildChapterTile(_chapters![i]),
+              FilledButton(
+                key: const Key('continue-button'),
+                onPressed: failed
+                    ? () => onRetry()
+                    : () => context.push(step.route),
+                child: Text(button),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogTile extends StatelessWidget {
+  const _CatalogTile({required this.item});
+
+  final LearnCatalogItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = item.done || item.current;
+    final subtitle = item.done
+        ? '已完成'
+        : item.current
+            ? '进行到这里'
+            : '稍后解锁';
+    final era = item.readingEraId == null
+        ? null
+        : HomeContent.eraById(item.readingEraId!);
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(
+              item.done
+                  ? Icons.check_circle
+                  : item.current
+                      ? Icons.play_circle_outline
+                      : Icons.lock_outline,
+            ),
+            title: Text(item.title),
+            subtitle: Text(subtitle),
+            trailing: open ? const Icon(Icons.chevron_right) : null,
+            onTap: open ? () => context.push(item.route) : null,
+          ),
+          if (era != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => context.push('/learn/library/${era.id}'),
+                child: Text('相关资料 · ${era.title}'),
+              ),
+            ),
         ],
       ),
     );

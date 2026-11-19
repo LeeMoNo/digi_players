@@ -42,16 +42,25 @@ class DIDGenerator {
     );
   }
 
-  /// 从助记词恢复 DID 密钥对（找回账号使用）
+  /// 从助记词恢复 DID 密钥对（找回账号使用）。
+  /// 只接受 12 个词。大小写和多余空格会先整理掉，再校验校验和。
   static Future<DIDKeyPair> recover(String mnemonicPhrase) async {
-    // 验证助记词合法性
-    if (!bip39.validateMnemonic(mnemonicPhrase)) {
+    final mnemonicWords = mnemonicPhrase
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (mnemonicWords.length != 12) {
       throw ArgumentError('助记词无效，请检查单词拼写');
     }
 
-    final mnemonicWords = mnemonicPhrase.trim().split(RegExp(r'\s+'));
+    final normalized = mnemonicWords.join(' ');
+    if (!bip39.validateMnemonic(normalized)) {
+      throw ArgumentError('助记词无效，请检查单词拼写');
+    }
 
-    final seedBytes = bip39.mnemonicToSeed(mnemonicPhrase);
+    final seedBytes = bip39.mnemonicToSeed(normalized);
     final privateKeySeed = seedBytes.sublist(0, 32);
 
     final keyPair = await _ed25519.newKeyPairFromSeed(privateKeySeed);

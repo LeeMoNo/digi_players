@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../learn/learn_path.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
@@ -18,6 +19,7 @@ class _State extends State<HashGameScreen> {
   String _hash      = '';
   bool   _levelDone = false;
   bool   _gameDone  = false;
+  LearnPathStep? _next;
   bool   _loading   = false;
   String? _seed;                   // 服务端签发的 seed
 
@@ -97,8 +99,12 @@ class _State extends State<HashGameScreen> {
 
     final box = await Hive.openBox('learn_progress');
     await box.put('game_done_game_hash', true);
-
-    if (mounted) setState(() => _loading = false);
+    final progress = await readLearnPathProgress();
+    if (!mounted) return;
+    setState(() {
+      _next = practiceClearDestination(practice: 'hash', progress: progress);
+      _loading = false;
+    });
   }
 
   // ── 哈希着色：把开头的零变绿色 ────────────────────
@@ -242,7 +248,7 @@ class _State extends State<HashGameScreen> {
             if (_levelDone)
               FilledButton(
                 onPressed: _nextLevel,
-                child: Text(_level < 2 ? '下一关 →' : '完成游戏，领取积分'),
+                child: Text(_level < 2 ? '下一关 →' : '完成游戏'),
               ),
           ],
         ),
@@ -278,14 +284,15 @@ class _State extends State<HashGameScreen> {
                 const CircularProgressIndicator(),
               ] else ...[
                 const SizedBox(height: 12),
-                const Text('积分已到账 🎉',
+                const Text('进度已记下',
                     style: TextStyle(color: Colors.green)),
               ],
               const SizedBox(height: 32),
-              FilledButton(
-                onPressed: () => context.go('/games'),
-                child: const Text('返回游戏列表'),
-              ),
+              if (_next != null)
+                FilledButton(
+                  onPressed: () => context.go(_next!.route),
+                  child: Text(_next!.button),
+                ),
             ],
           ),
         ),

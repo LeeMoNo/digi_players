@@ -6,7 +6,11 @@ import '../../core/api/api_client.dart';
 
 class MainShell extends StatefulWidget {
   final Widget child;
-  const MainShell({super.key, required this.child});
+
+  /// 测试可替换，避免启动时请求每日登录接口。
+  final Future<void> Function()? reportDailyLogin;
+
+  const MainShell({super.key, required this.child, this.reportDailyLogin});
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -15,15 +19,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   static const _tabs = [
     (icon: Icons.book_outlined, activeIcon: Icons.book, label: '学习', path: '/learn'),
-    (icon: Icons.games_outlined, activeIcon: Icons.games, label: '游戏', path: '/games'),
+    (icon: Icons.games_outlined, activeIcon: Icons.games, label: '练习', path: '/games'),
     (icon: Icons.person_outlined, activeIcon: Icons.person, label: '我的', path: '/profile'),
-    (icon: Icons.people_outlined, activeIcon: Icons.people, label: '广场', path: '/square'),
   ];
 
   @override
   void initState() {
     super.initState();
-    _reportDailyLogin();
+    (widget.reportDailyLogin ?? _reportDailyLogin)();
   }
 
   /// 每日登录积分；daily_cap=1 由服务端防重复，429 可忽略
@@ -35,6 +38,12 @@ class _MainShellState extends State<MainShell> {
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/game')) return 1;
+    if (location.startsWith('/profile') ||
+        location.startsWith('/square') ||
+        location.startsWith('/settings')) {
+      return 2;
+    }
     for (int i = 0; i < _tabs.length; i++) {
       if (location.startsWith(_tabs[i].path)) return i;
     }

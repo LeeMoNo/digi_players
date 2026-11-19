@@ -3,6 +3,7 @@ import 'package:digi_players/core/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/display_name.dart';
 import '../../core/models/badge.dart';
 import '../../core/storage/secure_storage.dart';
 import 'profile_repository.dart';
@@ -113,7 +114,7 @@ class _State extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                _nickname?.isNotEmpty == true ? _nickname! : '数字游民',
+                                displayNameOrFallback(_nickname),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             const SizedBox(height: 4),
@@ -147,6 +148,15 @@ class _State extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.people_outline),
+                  title: const Text('数民广场'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/square'),
+                ),
+              ),
               const SizedBox(height: 16),
 
               // ── 积分 + 排名 ───────────────────────────
@@ -169,6 +179,11 @@ class _State extends State<ProfileScreen> {
                   ),
                 ),
               ]),
+              const SizedBox(height: 8),
+              const Text(
+                '积分只记录你完成了多少内容。',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
               const SizedBox(height: 20),
 
               // ── 徽章墙 ────────────────────────────────

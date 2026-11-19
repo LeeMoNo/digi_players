@@ -2,6 +2,7 @@
 
 import 'package:digi_players/core/did/did_auth.dart';
 import 'package:digi_players/core/storage/secure_storage.dart';
+import 'package:digi_players/features/auth/intro_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,19 +65,20 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
 
     try {
       final result = await DIDAuth.authenticate();
-
-      if (mounted) {
-        // isNewUser == true 是首次注册，后期可跳新手引导
-        context.go('/learn');
-      }
+      final route = await routeAfterAuth(result.isNewUser);
+      if (mounted) context.go(route);
     } on DioException catch (e) {
       if (mounted) {
         final data = e.response?.data;
-        final msg = switch (data) {
+        String? raw = switch (data) {
           Map<String, dynamic>() => (data['error'] ?? data['message'])?.toString(),
           String() => data,
           _ => null,
-        } ?? '网络错误，请重试';
+        };
+        // Cloudflare 边缘异常（Worker 抛错）会返回纯文本 "error code: 1101" 等
+        final msg = (raw != null && raw.contains('error code:'))
+            ? '服务端暂时异常（${raw.trim()}），请稍后再试或联系管理员'
+            : (raw ?? '网络错误，请重试');
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('认证失败：$msg')));

@@ -17,6 +17,41 @@ class BadgeItem {
   });
 }
 
+const pathCompleteBadgeId = 'badge_all_phase1';
+
+/// 路径完成需要两节课和四个练习，不把注册本身算进去。
+Set<String> unlockedBadgeIdsFromProgress({
+  required bool hasDid,
+  required bool chapter1,
+  required bool chapter2,
+  required bool block,
+  required bool hash,
+  required bool p2p,
+  required bool antiscam,
+}) {
+  final unlocked = <String>{};
+  if (hasDid) unlocked.add('badge_did');
+  if (chapter1) unlocked.add('badge_ch001');
+  if (chapter2) unlocked.add('badge_ch002');
+  if (hash) unlocked.add('badge_hash_game');
+  if (antiscam) unlocked.add('badge_antiscam');
+  if (block) unlocked.add('badge_block_game');
+  if (p2p) unlocked.add('badge_p2p_game');
+
+  const pathSteps = {
+    'badge_ch001',
+    'badge_ch002',
+    'badge_block_game',
+    'badge_hash_game',
+    'badge_p2p_game',
+    'badge_antiscam',
+  };
+  if (unlocked.containsAll(pathSteps)) {
+    unlocked.add(pathCompleteBadgeId);
+  }
+  return unlocked;
+}
+
 // 全部徽章定义
 const allBadges = [
   BadgeItem(
@@ -56,8 +91,8 @@ const allBadges = [
   ),
   BadgeItem(
     id: 'badge_all_phase1',
-    name: 'Phase 1 先锋',
-    description: '完成 Phase 1 全部内容',
+    name: '路径完成',
+    description: '走完现有的两节课和四个练习',
     icon: Icons.military_tech,
     color: Colors.amber,
   ),

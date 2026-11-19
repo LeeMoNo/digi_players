@@ -32,6 +32,7 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.language),
             title: const Text('语言'),
+            subtitle: const Text('学习内容、练习和每日题仍是简体中文'),
             trailing: _LangSelector(
               current: _localeToLangCode(settings.locale),
               onChanged: (lang) => notifier.setLanguage(lang),
@@ -61,7 +62,7 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('版本'),
-            trailing: const Text('0.2.0',
+            trailing: const Text('1.0.0',
                 style: TextStyle(color: Colors.grey)),
           ),
           ListTile(

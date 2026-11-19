@@ -1,6 +1,8 @@
 // lib/features/square/square_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/api/api_client.dart';
+import '../../core/display_name.dart';
 import '../../core/storage/secure_storage.dart';
 
 class SquareScreen extends StatefulWidget {
@@ -10,12 +12,25 @@ class SquareScreen extends StatefulWidget {
 
 class _State extends State<SquareScreen> {
   String? _did;
+  String _name = fallbackDisplayName;
 
   @override
   void initState() {
     super.initState();
-    SecureStorage.getDID().then((d) {
-      if (mounted) setState(() => _did = d);
+    _load();
+  }
+
+  Future<void> _load() async {
+    final did = await SecureStorage.getDID();
+    var name = fallbackDisplayName;
+    try {
+      final res = await ApiClient.dio.get('/user/profile');
+      name = displayNameOrFallback(res.data['display_name'] as String?);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _did = did;
+      _name = name;
     });
   }
 
@@ -53,8 +68,8 @@ class _State extends State<SquareScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('数字游民',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(_name,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     Text(_shortDID(_did!),
                         style: const TextStyle(
                             fontFamily: 'monospace',

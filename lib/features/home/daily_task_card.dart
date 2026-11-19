@@ -4,7 +4,11 @@ import '../../core/api/api_client.dart';
 
 //每日任务卡片
 class DailyTaskCard extends StatefulWidget {
-  const DailyTaskCard({super.key});
+  const DailyTaskCard({super.key, this.loader});
+
+  /// 返回题目数据；失败或没有题目时返回 null。测试可替换。
+  final Future<Map<String, dynamic>?> Function()? loader;
+
   @override State<DailyTaskCard> createState() => _State();
 }
 
@@ -22,15 +26,29 @@ class _State extends State<DailyTaskCard> {
 
   Future<void> _load() async {
     try {
-      final res = await ApiClient.dio.get('/daily/quiz');
+      final data = widget.loader != null
+          ? await widget.loader!()
+          : await _loadFromApi();
+      if (!mounted) return;
       setState(() {
-        _quiz = res.data;
-        _completedToday = res.data['completed_today'] as bool;
+        _quiz = data;
+        _completedToday = data?['completed_today'] == true;
         _loading = false;
       });
     } catch (_) {
-      setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _quiz = null;
+        _loading = false;
+      });
     }
+  }
+
+  Future<Map<String, dynamic>?> _loadFromApi() async {
+    final res = await ApiClient.dio.get('/daily/quiz');
+    final data = res.data;
+    if (data is! Map) return null;
+    return Map<String, dynamic>.from(data);
   }
 
   Future<void> _submit() async {
@@ -52,17 +70,27 @@ class _State extends State<DailyTaskCard> {
     }
   }
 
+  String get _questionText {
+    final raw = _quiz?['question'];
+    if (raw is! Map) return '';
+    final question = raw.map((key, value) => MapEntry('$key', '$value'));
+    return question[_lang] ?? question['en'] ?? '';
+  }
+
+  List<String>? get _options {
+    final raw = _quiz?['options'];
+    if (raw is! Map) return null;
+    final localized = raw[_lang] ?? raw['en'];
+    if (localized is! List || localized.isEmpty) return null;
+    return localized.map((item) => '$item').toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SizedBox.shrink();
-    if (_quiz == null) return const SizedBox.shrink();
-
-    final question = Map<String, String>.from(_quiz!['question']);
-    final options  = (_quiz!['options'] as Map)[_lang] as List? ??
-        (_quiz!['options'] as Map)['en'] as List;
+    final options = _options;
+    final unavailable = !_loading && (_questionText.isEmpty || options == null);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -107,7 +135,16 @@ class _State extends State<DailyTaskCard> {
           ]),
           const SizedBox(height: 10),
 
-          Text(question[_lang] ?? question['en'] ?? '',
+          if (_loading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else if (unavailable || options == null)
+            const Text('今天的题暂时取不到')
+          else ...[
+          Text(_questionText,
               style: const TextStyle(fontSize: 14, height: 1.5)),
           const SizedBox(height: 10),
 
@@ -133,7 +170,7 @@ class _State extends State<DailyTaskCard> {
                 const SizedBox(width: 6),
                 Text(
                   _answeredCorrect!
-                      ? '回答正确！获得 2 积分 🎉'
+                      ? '今天的题完成了'
                       : '回答错误，再想想看',
                   style: TextStyle(
                     fontSize: 12,
@@ -158,7 +195,7 @@ class _State extends State<DailyTaskCard> {
             // 选项列表
             for (int i = 0; i < options.length; i++)
               _DailyOption(
-                text:     options[i] as String,
+                text:     options[i],
                 selected: _selected == i,
                 onTap:    () => setState(() => _selected = i),
               ),
@@ -176,6 +213,7 @@ class _State extends State<DailyTaskCard> {
                     : const Text('提交'),
               ),
             ),
+          ],
           ],
         ],
       ),

@@ -29,50 +29,18 @@ class ProfileRepository {
 
   // ── 已解锁的徽章（本地进度判断） ─────────────────
   Future<Set<String>> getUnlockedBadgeIds() async {
-    final box      = await Hive.openBox(_box);
-    final did      = await SecureStorage.getDID();
-    final unlocked = <String>{};
+    final box = await Hive.openBox(_box);
+    final did = await SecureStorage.getDID();
+    bool flag(String key) => box.get(key, defaultValue: false) == true;
 
-    // badge_did：有 DID 就算
-    if (did != null && did.isNotEmpty) unlocked.add('badge_did');
-
-    // badge_ch001
-    if (box.get('completed_ch_001', defaultValue: false)) {
-      unlocked.add('badge_ch001');
-    }
-
-    // badge_ch002
-    if (box.get('completed_ch_002', defaultValue: false)) {
-      unlocked.add('badge_ch002');
-    }
-
-    // badge_hash_game（游戏完成后写入 Hive）
-    if (box.get('game_done_game_hash', defaultValue: false)) {
-      unlocked.add('badge_hash_game');
-    }
-
-    // badge_antiscam
-    if (box.get('game_done_game_antiscam', defaultValue: false)) {
-      unlocked.add('badge_antiscam');
-    }
-
-    //徽章补充：完成区块链拼图和P2P节点模拟器游戏后解锁
-    if (box.get('game_done_game_block', defaultValue: false)) {
-      unlocked.add('badge_block_game');
-    }
-    if (box.get('game_done_game_p2p', defaultValue: false)) {
-      unlocked.add('badge_p2p_game');
-    }
-
-    // badge_all_phase1：以上五枚全部解锁
-    const phase1Required = {
-      'badge_did', 'badge_ch001', 'badge_ch002',
-      'badge_hash_game', 'badge_antiscam',
-    };
-    if (unlocked.containsAll(phase1Required)) {
-      unlocked.add('badge_all_phase1');
-    }
-
-    return unlocked;
+    return unlockedBadgeIdsFromProgress(
+      hasDid: did != null && did.isNotEmpty,
+      chapter1: flag('completed_ch_001'),
+      chapter2: flag('completed_ch_002'),
+      block: flag('game_done_game_block'),
+      hash: flag('game_done_game_hash'),
+      p2p: flag('game_done_game_p2p'),
+      antiscam: flag('game_done_game_antiscam'),
+    );
   }
 }

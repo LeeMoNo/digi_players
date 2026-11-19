@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../learn/learn_path.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
@@ -21,6 +22,7 @@ class _State extends State<P2PGameScreen> {
   int         _steps      = 0;
   bool        _levelDone  = false;
   bool        _gameDone   = false;
+  LearnPathStep? _next;
   String?     _seed;
 
   P2PLevel get _level => p2pLevels[_levelIndex];
@@ -116,10 +118,15 @@ class _State extends State<P2PGameScreen> {
           'proof_hash':  proof,
           'result_data': resultData,
         });
-        final box = await Hive.openBox('learn_progress');
-        await box.put('game_done_game_p2p', true);
       } catch (_) {}
     }
+    final box = await Hive.openBox('learn_progress');
+    await box.put('game_done_game_p2p', true);
+    final progress = await readLearnPathProgress();
+    if (!mounted) return;
+    setState(() {
+      _next = practiceClearDestination(practice: 'p2p', progress: progress);
+    });
   }
 
   @override
@@ -269,13 +276,14 @@ class _State extends State<P2PGameScreen> {
               style: TextStyle(color: Colors.grey, height: 1.6),
             ),
             const SizedBox(height: 12),
-            const Text('积分已到账 🎉',
+            const Text('进度已记下',
                 style: TextStyle(color: Colors.green)),
             const SizedBox(height: 32),
-            FilledButton(
-              onPressed: () => context.go('/games'),
-              child: const Text('返回游戏列表'),
-            ),
+            if (_next != null)
+              FilledButton(
+                onPressed: () => context.go(_next!.route),
+                child: Text(_next!.button),
+              ),
           ],
         ),
       ),

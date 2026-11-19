@@ -7,6 +7,7 @@ import 'package:digi_players/features/home/fraud_screen.dart';
 import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
+import 'package:digi_players/features/learn/library_screen.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
 import 'package:digi_players/features/points/profile_screen.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
@@ -18,7 +19,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'app_route_observer.dart';
+import '../../features/auth/intro_screen.dart';
 import '../../features/auth/mnemonic_screen.dart';
+import '../../features/auth/recover_screen.dart';
 import '../../features/auth/register_screen.dart';
 
 final initialLocationProvider = Provider<String>((_) => '/learn');
@@ -34,6 +38,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 GoRouter createAppRouter({required String initialLocation}) {
   return GoRouter(
     initialLocation: initialLocation,
+    observers: [appRouteObserver],
     routes: [
       GoRoute(
         path: '/register',
@@ -53,6 +58,10 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/recover',
         builder: (context, state) => const RecoverScreen(),
       ),
+      GoRoute(
+        path: '/intro',
+        builder: (context, state) => const IntroScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -60,6 +69,18 @@ GoRouter createAppRouter({required String initialLocation}) {
             path: '/learn',
             builder: (_, __) => const LearnHomeScreen(),
             routes: [
+              GoRoute(
+                path: 'library',
+                builder: (_, __) => const LibraryScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':eraId',
+                    builder: (_, state) => EraDetailScreen(
+                      eraId: state.pathParameters['eraId']!,
+                    ),
+                  ),
+                ],
+              ),
               GoRoute(
                 path: 'fraud',
                 builder: (context, state) => fraudScreenFromState(state),
@@ -117,18 +138,6 @@ GoRouter createAppRouter({required String initialLocation}) {
       ),
     ],
   );
-}
-
-class RecoverScreen extends StatelessWidget {
-  const RecoverScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('恢复身份')),
-      body: const Center(child: Text('Recover 流程待实现')),
-    );
-  }
 }
 
 class _RouteErrorPage extends StatelessWidget {

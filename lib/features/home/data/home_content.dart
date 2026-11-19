@@ -96,6 +96,37 @@ class LearnMapEntry {
   final String description;
 }
 
+/// 按概念出现时间排列的一节资料。正文复用已有年史、术语、流程和骗局。
+class EraSection {
+  const EraSection({
+    required this.id,
+    required this.sortYear,
+    required this.when,
+    required this.title,
+    this.besidePath,
+    this.eventYearMonths = const [],
+    this.glossaryTerms = const [],
+    this.flowTitles = const [],
+    this.scamIds = const [],
+    this.checklistIds = const [],
+    this.stablecoin = false,
+  });
+
+  final String id;
+  final int sortYear;
+  final String when;
+  final String title;
+  final String? besidePath;
+  final List<String> eventYearMonths;
+  final List<String> glossaryTerms;
+  final List<String> flowTitles;
+  final List<String> scamIds;
+  final List<String> checklistIds;
+  final bool stablecoin;
+
+  String get heading => '$when · $title';
+}
+
 abstract final class HomeContent {
   static const tagline = '从链、钱包到安全 — 系统学加密货币';
 
@@ -430,6 +461,138 @@ abstract final class HomeContent {
       if (s.id == id) return s;
     }
     return null;
+  }
+
+  /// 只这一节是新写的。锚定、储备、脱锚分开说，不提供购买或发行步骤。
+  static const stablecoinParagraphs = [
+    '稳定币出现在人们需要一个链上计价单位之后。它的价格被说成接近 1 美元，但「看起来像美元」和「就是美元」不是一回事。',
+    '锚定是一个承诺：发行方或机制试图让 1 枚稳定币换回约 1 美元。储备是这个承诺拿什么撑住，例如现金、国债或其他资产。脱锚是这个承诺暂时或长期做不到，价格明显离开 1 美元。',
+    '三件事要分开看：有人在报价，不代表储备随时兑得出来；储备存在，不代表你拿得走；价格回到 1 美元，也不表示中间没有人兑付失败。',
+  ];
+
+  static const eraSections = [
+    EraSection(
+      id: 'ledger',
+      sortYear: 1998,
+      when: '1998–2009',
+      title: '共有的账本',
+      besidePath: '第一节 · 共有的账本',
+      eventYearMonths: ['1998-xx', '2008-10', '2009-01'],
+      glossaryTerms: ['区块', 'UTXO'],
+    ),
+    EraSection(
+      id: 'work',
+      sortYear: 2009,
+      when: '2009',
+      title: '为什么要花算力',
+      besidePath: '练习 · 哈希碰碰乐',
+      glossaryTerms: ['共识'],
+    ),
+    EraSection(
+      id: 'broadcast',
+      sortYear: 2009,
+      when: '2009',
+      title: '一笔交易怎么被知道',
+      besidePath: '练习 · 节点怎么传消息',
+      glossaryTerms: ['确认数'],
+      flowTitles: ['链上转账的一生'],
+    ),
+    EraSection(
+      id: 'other_chains',
+      sortYear: 2011,
+      when: '2011–2013',
+      title: '别的链和交易所',
+      eventYearMonths: ['2011-10', '2013-11'],
+    ),
+    EraSection(
+      id: 'custody',
+      sortYear: 2014,
+      when: '2014',
+      title: '把钥匙交给别人',
+      besidePath: '第二节 · 密码学入门',
+      eventYearMonths: ['2014-02'],
+      glossaryTerms: ['助记词', 'Web3 钱包'],
+      flowTitles: ['Web3 钱包在其中的位置'],
+      scamIds: ['fake_exchange', 'pig_butchering', 'impersonation'],
+      checklistIds: ['mnemonic', 'phishing', 'fake_app'],
+    ),
+    EraSection(
+      id: 'stablecoin',
+      sortYear: 2014,
+      when: '2014',
+      title: '稳定币为什么看起来像美元',
+      stablecoin: true,
+    ),
+    EraSection(
+      id: 'contracts',
+      sortYear: 2015,
+      when: '2015–2020',
+      title: '程序代替中间人',
+      eventYearMonths: ['2015-07', '2020-06'],
+      glossaryTerms: ['Gas', '智能合约', 'DeFi', 'Layer 2', 'CEX / DEX'],
+      flowTitles: ['连接 dApp 时发生了什么'],
+      scamIds: ['fake_airdrop'],
+      checklistIds: ['approve', 'transfer'],
+    ),
+    EraSection(
+      id: 'new_coins',
+      sortYear: 2017,
+      when: '2017–2021',
+      title: '新币的一生',
+      besidePath: '练习 · 反诈识别',
+      eventYearMonths: ['2017-08', '2021-03'],
+      scamIds: ['rug_pull', 'ponzi'],
+      checklistIds: ['investment'],
+    ),
+    EraSection(
+      id: 'custody_returns',
+      sortYear: 2022,
+      when: '2022–2024',
+      title: '托管又回来了',
+      eventYearMonths: ['2022-09', '2022-11', '2024-01'],
+    ),
+  ];
+
+  static EraSection? eraById(String id) {
+    for (final era in eraSections) {
+      if (era.id == id) return era;
+    }
+    return null;
+  }
+
+  static List<TimelineEvent> eventsFor(EraSection era) {
+    return [
+      for (final event in timelineEvents)
+        if (era.eventYearMonths.contains(event.yearMonth)) event,
+    ];
+  }
+
+  static List<GlossaryTerm> termsFor(EraSection era) {
+    return [
+      for (final term in glossaryTerms)
+        if (era.glossaryTerms.contains(term.term)) term,
+    ];
+  }
+
+  static List<FlowOverview> flowsFor(EraSection era) {
+    return [
+      for (final flow in flowOverviews)
+        if (era.flowTitles.contains(flow.title)) flow,
+    ];
+  }
+
+  static List<FraudScamPattern> scamsFor(EraSection era) {
+    return [
+      for (final id in era.scamIds)
+        if (scamById(id) != null) scamById(id)!,
+    ];
+  }
+
+  static List<FraudChecklistItem> checklistFor(EraSection era) {
+    return [
+      for (final item in fraudChecklist)
+        if (era.checklistIds.contains(item.id)) item,
+    ];
   }
 
   static String timelineTypeLabel(TimelineEventType type) => switch (type) {

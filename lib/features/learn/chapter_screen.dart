@@ -75,7 +75,7 @@ class _State extends State<ChapterScreen> {
               Row(children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 16),
                 const SizedBox(width: 6),
-                Text('已获得积分',
+                Text('这一张读完了',
                   style: TextStyle(color: Colors.green.shade700, fontSize: 13)),
               ]),
             const SizedBox(height: 12),

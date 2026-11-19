@@ -1,7 +1,8 @@
 // lib/features/square/square_chat_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../core/api/api_client.dart';
+import '../../core/display_name.dart';
 import 'square_provider.dart';
 import 'square_repository.dart';
 
@@ -25,6 +26,23 @@ class _SquareChatScreenState
   final _inputCtrl   = TextEditingController();
   final _scrollCtrl  = ScrollController();
   bool _sending      = false;
+  String _myName     = fallbackDisplayName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadName();
+  }
+
+  Future<void> _loadName() async {
+    var name = fallbackDisplayName;
+    try {
+      final res = await ApiClient.dio.get('/user/profile');
+      name = displayNameOrFallback(res.data['display_name'] as String?);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _myName = name);
+  }
 
   @override
   void dispose() {
@@ -110,7 +128,7 @@ class _SquareChatScreenState
                     final msg = messages[i];
                     final isMe = msg.did == myDID;
                     return _MessageBubble(
-                        msg: msg, isMe: isMe);
+                        msg: msg, isMe: isMe, myName: _myName);
                   },
                 );
               },
@@ -174,8 +192,13 @@ class _SquareChatScreenState
 class _MessageBubble extends StatelessWidget {
   final SquareMessage msg;
   final bool isMe;
+  final String myName;
 
-  const _MessageBubble({required this.msg, required this.isMe});
+  const _MessageBubble({
+    required this.msg,
+    required this.isMe,
+    required this.myName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +280,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           if (isMe) ...[
             const SizedBox(width: 6),
-            _Avatar(name: '我', isMe: true),
+            _Avatar(name: myName, isMe: true),
           ],
         ],
       ),

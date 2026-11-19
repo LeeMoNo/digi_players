@@ -43,25 +43,49 @@ const _games = [
 ];
 
 class GamesHomeScreen extends StatefulWidget {
-  const GamesHomeScreen({super.key});
+  const GamesHomeScreen({super.key, this.loadProgress});
+
+  /// 测试可替换。返回已完成章节和已通关练习 id。
+  final Future<({Set<String> chapters, Set<String> games})> Function()? loadProgress;
+
   @override State<GamesHomeScreen> createState() => _State();
 }
 
 class _State extends State<GamesHomeScreen> {
   Set<String> _completedChapters = {};
+  Set<String> _doneGames = {};
 
   @override
   void initState() { super.initState(); _loadProgress(); }
 
   Future<void> _loadProgress() async {
+    final injected = widget.loadProgress;
+    if (injected != null) {
+      final progress = await injected();
+      if (!mounted) return;
+      setState(() {
+        _completedChapters = progress.chapters;
+        _doneGames = progress.games;
+      });
+      return;
+    }
     final box = await Hive.openBox('learn_progress');
     final completed = <String>{};
+    final done = <String>{};
     for (final g in _games) {
-      if (box.get('completed_${g.requiresChapter}', defaultValue: false)) {
+      if (box.get('completed_${g.requiresChapter}', defaultValue: false) == true) {
         completed.add(g.requiresChapter);
       }
+      if (box.get('game_done_${g.id}', defaultValue: false) == true) {
+        done.add(g.id);
+      }
     }
-    if (mounted) setState(() => _completedChapters = completed);
+    if (mounted) {
+      setState(() {
+        _completedChapters = completed;
+        _doneGames = done;
+      });
+    }
   }
 
   @override
@@ -74,7 +98,8 @@ class _State extends State<GamesHomeScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
           final g        = _games[i];
-          final unlocked = _completedChapters.contains(g.requiresChapter);
+          final done     = _doneGames.contains(g.id);
+          final unlocked = done || _completedChapters.contains(g.requiresChapter);
           return Card(
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
@@ -100,7 +125,11 @@ class _State extends State<GamesHomeScreen> {
                       style: TextStyle(
                           color: unlocked ? null : Colors.grey,
                           fontSize: 13)),
-                  if (!unlocked) ...[
+                  if (done) ...[
+                    const SizedBox(height: 6),
+                    const Text('已完成',
+                        style: TextStyle(fontSize: 12, color: Colors.green)),
+                  ] else if (!unlocked) ...[
                     const SizedBox(height: 6),
                     Row(children: [
                       const Icon(Icons.lock_outline,
@@ -115,9 +144,11 @@ class _State extends State<GamesHomeScreen> {
                   ],
                 ],
               ),
-              trailing: unlocked
-                  ? const Icon(Icons.chevron_right)
-                  : const Icon(Icons.lock_outline, color: Colors.grey),
+              trailing: done
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : unlocked
+                      ? const Icon(Icons.chevron_right)
+                      : const Icon(Icons.lock_outline, color: Colors.grey),
               onTap: unlocked ? () => context.push(g.route) : null,
             ),
           );

@@ -2,13 +2,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../learn/learn_path.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
 import 'antiscam_data.dart';
 
 class AntiscamScreen extends StatefulWidget {
-  const AntiscamScreen({super.key});
+  const AntiscamScreen({super.key, this.fetchSeed = true});
+
+  /// 测试可关掉，避免请求开局接口。
+  final bool fetchSeed;
+
   @override State<AntiscamScreen> createState() => _State();
 }
 
@@ -18,12 +23,14 @@ class _State extends State<AntiscamScreen> {
   bool?   _answered;        // null=未答，true=正确，false=错误
   bool    _finished = false;
   bool    _loading  = false;
+  LearnPathStep? _clearStep;
   String? _seed;
 
-  static const _passScore = 7; // 10题中至少对7题
-
   @override
-  void initState() { super.initState(); _fetchSeed(); }
+  void initState() {
+    super.initState();
+    if (widget.fetchSeed) _fetchSeed();
+  }
 
   Future<void> _fetchSeed() async {
     try {
@@ -35,13 +42,20 @@ class _State extends State<AntiscamScreen> {
 
   void _answer(bool playerSaysScam) {
     if (_answered != null) return;
-    final correct = playerSaysScam == antiscamQuestions[_index].isScam;
+    final correct = playerSaysScam == antiscamAllQuestions[_index].isScam;
+    if (correct) _score++;
+    setState(() => _answered = correct);
+  }
+
+  void _choose(int index) {
+    if (_answered != null) return;
+    final correct = index == antiscamAllQuestions[_index].answerIndex;
     if (correct) _score++;
     setState(() => _answered = correct);
   }
 
   void _next() {
-    if (_index < antiscamQuestions.length - 1) {
+    if (_index < antiscamAllQuestions.length - 1) {
       setState(() { _index++; _answered = null; });
     } else {
       _submitScore();
@@ -51,11 +65,11 @@ class _State extends State<AntiscamScreen> {
   Future<void> _submitScore() async {
     setState(() { _finished = true; _loading = true; });
 
-    final passed = _score >= _passScore;
+    final passed = _score >= antiscamPassScore;
     if (passed && _seed != null) {
       try {
         final did        = await SecureStorage.getDID() ?? '';
-        final resultData = '$_score/${antiscamQuestions.length}';
+        final resultData = '$_score/${antiscamAllQuestions.length}';
         final proof      = buildProofHash(
           did:        did,
           actionKey:  'game_antiscam_complete',
@@ -69,37 +83,41 @@ class _State extends State<AntiscamScreen> {
         });
       } catch (_) {}
     }
+    LearnPathStep? next;
     if (passed) {
       final box = await Hive.openBox('learn_progress');
       await box.put('game_done_game_antiscam', true);
+      final progress = await readLearnPathProgress();
+      next = practiceClearDestination(practice: 'antiscam', progress: progress);
     }
-    if (mounted) setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() {
+      _clearStep = next;
+      _loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_finished) return _buildResult();
 
-    final q = antiscamQuestions[_index];
+    final q = antiscamAllQuestions[_index];
+    final pageTitle = scamPageTitle(q);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('反诈训练营  ${_index + 1}/${antiscamQuestions.length}'),
+        title: Text('反诈训练营  ${_index + 1}/${antiscamAllQuestions.length}'),
       ),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 进度条
+        children: [
             LinearProgressIndicator(
-                value: (_index + 1) / antiscamQuestions.length),
+                value: (_index + 1) / antiscamAllQuestions.length),
             const SizedBox(height: 8),
-            Text('正确：$_score  |  剩余：${antiscamQuestions.length - _index} 题',
+            Text('正确：$_score  |  剩余：${antiscamAllQuestions.length - _index} 题',
                 style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 20),
 
-            // 情景卡片
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -111,8 +129,18 @@ class _State extends State<AntiscamScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 判断按钮
-            if (_answered == null) ...[
+            if (_answered == null && q.isChoice) ...[
+              Text('你当时会点哪一个',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              for (var i = 0; i < q.options.length; i++) ...[
+                OutlinedButton(
+                  onPressed: () => _choose(i),
+                  child: Text(q.options[i]),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ] else if (_answered == null) ...[
               FilledButton.tonal(
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.red.shade50,
@@ -174,7 +202,9 @@ class _State extends State<AntiscamScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _answered! ? '判断正确！' : '判断有误',
+                        _answered!
+                            ? (q.isChoice ? '选择正确' : '判断正确')
+                            : (q.isChoice ? '选择有误' : '判断有误'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: _answered! ? Colors.green.shade700
@@ -204,24 +234,31 @@ class _State extends State<AntiscamScreen> {
                     Text(q.analysis,
                         style: const TextStyle(
                             fontSize: 13, height: 1.6, color: Colors.black87)),
+                    if (pageTitle != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () =>
+                            context.push('/learn/fraud?scam=${q.scamId}'),
+                        child: Text('查看「$pageTitle」'),
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _next,
-                child: Text(_index < antiscamQuestions.length - 1
+                child: Text(_index < antiscamAllQuestions.length - 1
                     ? '下一题 →' : '查看结果'),
               ),
             ],
-          ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildResult() {
-    final passed = _score >= _passScore;
+    final passed = _score >= antiscamPassScore;
     return Scaffold(
       body: Center(
         child: Padding(
@@ -241,7 +278,7 @@ class _State extends State<AntiscamScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                '$_score / ${antiscamQuestions.length} 题正确',
+                '$_score / ${antiscamAllQuestions.length} 题正确',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
@@ -257,14 +294,20 @@ class _State extends State<AntiscamScreen> {
                 const CircularProgressIndicator(),
               ] else if (passed) ...[
                 const SizedBox(height: 8),
-                const Text('积分已到账 🎉',
+                const Text('进度已记下',
                     style: TextStyle(color: Colors.green)),
               ],
               const SizedBox(height: 32),
-              FilledButton(
-                onPressed: () => context.go('/games'),
-                child: const Text('返回游戏列表'),
-              ),
+              if (passed && _clearStep != null)
+                FilledButton(
+                  onPressed: () => context.go(_clearStep!.route),
+                  child: Text(_clearStep!.button),
+                )
+              else if (!passed)
+                FilledButton(
+                  onPressed: () => context.go('/learn'),
+                  child: const Text('返回学习'),
+                ),
               if (!passed) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
