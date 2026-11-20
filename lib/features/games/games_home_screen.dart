@@ -1,6 +1,7 @@
 // lib/features/games/games_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../learn/learn_path.dart';
 
@@ -59,6 +60,25 @@ const _games = [
   ),
 ];
 
+/// 这次打开应用期间记住练习页的解锁状态，再次进入先显示，再在后台更新。
+class GamesHomeCache {
+  static Set<String>? chapters;
+  static Set<String>? games;
+  static int _ticket = 0;
+
+  static bool get hasData => chapters != null && games != null;
+
+  static int begin() => ++_ticket;
+
+  static bool isLatest(int ticket) => ticket == _ticket;
+
+  static void clear() {
+    chapters = null;
+    games = null;
+    _ticket++;
+  }
+}
+
 class GamesHomeScreen extends StatefulWidget {
   const GamesHomeScreen({super.key, this.loadProgress});
 
@@ -77,37 +97,51 @@ class _State extends State<GamesHomeScreen> {
   @override
   void initState() {
     super.initState();
+    if (GamesHomeCache.hasData) {
+      _completedChapters = GamesHomeCache.chapters!;
+      _doneGames = GamesHomeCache.games!;
+    }
     _loadProgress();
   }
 
+  void _remember(Set<String> chapters, Set<String> games) {
+    GamesHomeCache.chapters = chapters;
+    GamesHomeCache.games = games;
+    _completedChapters = chapters;
+    _doneGames = games;
+  }
+
   Future<void> _loadProgress() async {
-    final injected = widget.loadProgress;
-    if (injected != null) {
-      final progress = await injected();
-      if (!mounted) return;
-      setState(() {
-        _completedChapters = progress.chapters;
-        _doneGames = progress.games;
-      });
-      return;
-    }
-    final progress = await readLearnPathProgress();
-    final completed = <String>{
-      if (progress.chapter1) 'ch_001',
-      if (progress.chapter2) 'ch_002',
-    };
-    final done = <String>{
-      if (progress.block) 'game_block',
-      if (progress.hash) 'game_hash',
-      if (progress.p2p) 'game_p2p',
-      if (progress.antiscam) 'game_antiscam',
-    };
-    if (mounted) {
-      setState(() {
-        _completedChapters = completed;
-        _doneGames = done;
-      });
-    }
+    final ticket = GamesHomeCache.begin();
+    try {
+      final injected = widget.loadProgress;
+      late final Set<String> completed;
+      late final Set<String> done;
+      if (injected != null) {
+        final progress = await injected();
+        completed = progress.chapters;
+        done = progress.games;
+      } else {
+        final progress = await readLearnPathProgress();
+        completed = <String>{
+          if (progress.chapter1) 'ch_001',
+          if (progress.chapter2) 'ch_002',
+        };
+        done = <String>{
+          if (progress.block) 'game_block',
+          if (progress.hash) 'game_hash',
+          if (progress.p2p) 'game_p2p',
+          if (progress.antiscam) 'game_antiscam',
+        };
+      }
+      if (!GamesHomeCache.isLatest(ticket)) return;
+      if (!mounted) {
+        GamesHomeCache.chapters = completed;
+        GamesHomeCache.games = done;
+        return;
+      }
+      setState(() => _remember(completed, done));
+    } catch (_) {}
   }
 
   @override
@@ -126,7 +160,7 @@ class _State extends State<GamesHomeScreen> {
                 done || _completedChapters.contains(g.requiresChapter);
             return Card(
               child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: chevronPadding(const EdgeInsets.all(16)),
                 leading: Container(
                   width: 48,
                   height: 48,

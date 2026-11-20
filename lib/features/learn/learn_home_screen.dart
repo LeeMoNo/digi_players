@@ -1,12 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_route_observer.dart';
 import '../home/daily_task_card.dart';
 import '../home/data/home_content.dart';
 import 'learn_path.dart';
 import 'learn_repository.dart';
+
+/// 这次打开应用期间记住学习首页，再次进入先显示，再在后台更新。
+class LearnHomeCache {
+  static LearnPathProgress? progress;
+  static bool chaptersReady = false;
+  static int _ticket = 0;
+
+  static int begin() => ++_ticket;
+
+  static bool isLatest(int ticket) => ticket == _ticket;
+
+  static void clear() {
+    progress = null;
+    chaptersReady = false;
+    _ticket++;
+  }
+}
 
 class LearnHomeScreen extends StatefulWidget {
   const LearnHomeScreen({
@@ -39,6 +57,12 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    final cached = LearnHomeCache.progress;
+    if (LearnHomeCache.chaptersReady && cached != null) {
+      _progress = cached;
+      _chaptersReady = true;
+      _loadingChapters = false;
+    }
     _load();
   }
 
@@ -65,9 +89,14 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
   }
 
   Future<void> _load() async {
-    final progress = await (widget.loadProgress ?? readLearnPathProgress)();
-    if (!mounted) return;
-    setState(() => _progress = progress);
+    final ticket = LearnHomeCache.begin();
+    try {
+      final progress = await (widget.loadProgress ?? readLearnPathProgress)();
+      if (!LearnHomeCache.isLatest(ticket)) return;
+      LearnHomeCache.progress = progress;
+      if (!mounted) return;
+      setState(() => _progress = progress);
+    } catch (_) {}
 
     try {
       final load =
@@ -76,6 +105,8 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
             await _repo.fetchChaptersList();
           };
       await load();
+      if (!LearnHomeCache.isLatest(ticket)) return;
+      LearnHomeCache.chaptersReady = true;
       if (!mounted) return;
       setState(() {
         _chaptersReady = true;
@@ -83,7 +114,7 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
         _loadingChapters = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!LearnHomeCache.isLatest(ticket) || !mounted) return;
       setState(() {
         _loadingChapters = false;
         if (!_chaptersReady) _chaptersFailed = true;
@@ -129,6 +160,7 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
             const SizedBox(height: 8),
             Card(
               child: ListTile(
+                contentPadding: chevronTilePadding,
                 leading: const Icon(Icons.menu_book_outlined),
                 title: const Text('资料'),
                 subtitle: const Text('年史、术语、防骗与外链'),
@@ -224,6 +256,7 @@ class _CatalogTile extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
+            contentPadding: chevronTilePadding,
             leading: Icon(
               item.done
                   ? Icons.check_circle

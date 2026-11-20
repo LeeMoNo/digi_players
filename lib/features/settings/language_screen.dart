@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout.dart';
 import '../../core/providers/app_settings_provider.dart';
 
@@ -42,7 +43,7 @@ class LanguageScreen extends ConsumerWidget {
     final current = languageCodeOf(settings.locale);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('语言')),
+      appBar: AppBar(leading: appBarLeading(context), title: const Text('语言')),
       body: ReadingWidth(
         maxWidth: WindowLayout.formMaxWidth,
         child: RadioGroup<String>(

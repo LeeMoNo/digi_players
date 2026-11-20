@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/display_name.dart';
 import 'square_provider.dart';
 import 'square_repository.dart';
@@ -86,6 +87,7 @@ class _SquareChatScreenState extends ConsumerState<SquareChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: appBarLeading(context),
         title: Text(widget.roomName),
         actions: [
           // 连接状态指示器

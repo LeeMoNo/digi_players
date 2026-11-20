@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout.dart';
 import '../../core/storage/secure_storage.dart';
 
@@ -64,7 +65,10 @@ class _State extends State<MnemonicViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('查看助记词')),
+      appBar: AppBar(
+        leading: appBarLeading(context),
+        title: const Text('查看助记词'),
+      ),
       body: ReadingWidth(
         maxWidth: WindowLayout.formMaxWidth,
         child: _mnemonic.isEmpty

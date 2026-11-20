@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout_host.dart';
 import '../home/data/home_content.dart';
 import '../home/widgets/home_widgets.dart';
@@ -18,7 +20,13 @@ class LibraryScreen extends StatelessWidget {
       context.push(location);
       return;
     }
-    if (selectedEraId != null) {
+    final path = GoRouterState.of(context).uri.path;
+    const prefix = '/learn/library/';
+    final opened =
+        path.startsWith(prefix) &&
+        path.substring(prefix.length).isNotEmpty &&
+        !path.substring(prefix.length).contains('/');
+    if (opened) {
       context.pushReplacement(location);
     } else {
       context.push(location);
@@ -28,7 +36,7 @@ class LibraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('资料')),
+      appBar: AppBar(leading: appBarLeading(context), title: const Text('资料')),
       body: ReadingWidth(
         child: ListView(
           key: const Key('library-scroll'),
@@ -44,6 +52,7 @@ class LibraryScreen extends StatelessWidget {
             for (final era in HomeContent.eraSections) ...[
               Card(
                 child: ListTile(
+                  contentPadding: chevronTilePadding,
                   selected: era.id == selectedEraId,
                   title: Text(era.heading),
                   subtitle: era.besidePath == null
@@ -84,7 +93,10 @@ class EraDetailScreen extends StatelessWidget {
     final era = HomeContent.eraById(eraId);
     if (era == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('资料')),
+        appBar: AppBar(
+          leading: appBarLeading(context),
+          title: const Text('资料'),
+        ),
         body: const ReadingWidth(child: Center(child: Text('没有这一节'))),
       );
     }
@@ -96,7 +108,7 @@ class EraDetailScreen extends StatelessWidget {
     final checklist = HomeContent.checklistFor(era);
 
     return Scaffold(
-      appBar: AppBar(title: Text(era.when)),
+      appBar: AppBar(leading: appBarLeading(context), title: Text(era.when)),
       body: ReadingWidth(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -187,6 +199,7 @@ class EraDetailScreen extends StatelessWidget {
               for (final scam in scams)
                 Card(
                   child: ListTile(
+                    contentPadding: chevronTilePadding,
                     title: Text(scam.title),
                     subtitle: Text(scam.summary),
                     trailing: const Icon(Icons.chevron_right),

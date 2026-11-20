@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/layout/fold_side.dart';
+import '../../../core/router/app_back_button.dart';
 import '../../../core/models/badge.dart';
 import '../../../core/progress/progress_store.dart';
 import '../../learn/learn_path.dart';
@@ -204,6 +205,7 @@ class _State extends State<AntiscamScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: appBarLeading(context),
         title: Text('反诈训练营  ${_index + 1}/${antiscamAllQuestions.length}'),
       ),
       body: FoldSide(

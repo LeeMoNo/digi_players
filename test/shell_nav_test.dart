@@ -26,7 +26,7 @@ void main() {
     expect(find.text('游戏'), findsNothing);
     expect(find.text('广场'), findsNothing);
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(tester.getTopLeft(find.text('学习')).dy, greaterThan(400));
 
     router.go('/profile');
@@ -64,7 +64,7 @@ void main() {
     );
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.text('学习'), findsOneWidget);
     expect(find.text('练习'), findsOneWidget);
     expect(find.text('我的'), findsOneWidget);
@@ -77,20 +77,41 @@ void main() {
       sizeClass: HorizontalSizeClass.regular,
     );
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byKey(const Key('main-rail')), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
-    final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-    expect(rail.extended, isFalse);
-    expect(rail.labelType, NavigationRailLabelType.all);
+    expect(tester.getSize(find.byKey(const Key('main-rail'))).width, 80);
 
     await tester.tap(find.text('练习'));
     await tester.pump();
     await tester.pump();
     expect(find.text('games-body'), findsOneWidget);
-    expect(
-      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
-      1,
+    final selected = tester.widget<Material>(
+      find
+          .ancestor(of: find.text('练习'), matching: find.byType(Material))
+          .first,
     );
+    expect(
+      selected.color,
+      Theme.of(tester.element(find.text('练习'))).colorScheme.primaryContainer,
+    );
+
+    final before = tester.getTopLeft(find.byKey(const Key('rail-menu')));
+    expect(
+      before.dx,
+      closeTo(tester.getTopLeft(find.byKey(const Key('main-rail'))).dx, 8),
+    );
+    await tester.tap(find.byKey(const Key('rail-menu')));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(const Key('main-rail'))).width, 200);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('rail-menu'))).dx,
+      closeTo(before.dx, 1),
+    );
+    expect(find.text('学习'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('rail-menu')));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(const Key('main-rail'))).width, 80);
   });
 
   testWidgets('左右安全区垫在底栏和侧栏外侧', (tester) async {
@@ -113,7 +134,7 @@ void main() {
       paddingLeft: 40,
     );
     expect(
-      tester.getTopLeft(find.byType(NavigationRail)).dx,
+      tester.getTopLeft(find.byKey(const Key('main-rail'))).dx,
       greaterThanOrEqualTo(40),
     );
   });

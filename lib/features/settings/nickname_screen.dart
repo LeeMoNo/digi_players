@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout.dart';
 
 class NicknameScreen extends StatefulWidget {
@@ -89,7 +90,10 @@ class _State extends State<NicknameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('设置昵称')),
+      appBar: AppBar(
+        leading: appBarLeading(context),
+        title: const Text('设置昵称'),
+      ),
       body: ReadingWidth(
         maxWidth: WindowLayout.formMaxWidth,
         child: Padding(

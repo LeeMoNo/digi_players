@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/layout/fold_side.dart';
+import '../../../core/router/app_back_button.dart';
 import '../../../core/models/badge.dart';
 import '../../../core/progress/progress_store.dart';
 import '../../learn/learn_path.dart';
@@ -232,7 +233,10 @@ class _State extends State<HashGameScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: Text('哈希碰碰乐  关卡 ${_level + 1}/3')),
+      appBar: AppBar(
+        leading: appBarLeading(context),
+        title: Text('哈希碰碰乐  关卡 ${_level + 1}/3'),
+      ),
       backgroundColor: const Color(0xFF0F1117),
       body: FoldSide(
         child: SafeArea(

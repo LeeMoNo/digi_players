@@ -3,22 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/display_name.dart';
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/models/badge.dart';
+import '../../core/router/app_route_observer.dart';
 import 'profile_repository.dart';
+import 'user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.loadProfile});
+  const ProfileScreen({super.key, this.loadProfile, this.imageForUrl});
 
   /// 测试可替换档案加载。参数是上次成功的数据。
   final Future<ProfileSnapshot> Function(ProfileSnapshot? previous)?
   loadProfile;
 
+  /// 测试可替换头像图片来源，避免请求网络。
+  final ImageProvider<Object> Function(String url)? imageForUrl;
+
   @override
   State<ProfileScreen> createState() => _State();
 }
 
-class _State extends State<ProfileScreen> {
+class _State extends State<ProfileScreen> with RouteAware {
   final _repo = ProfileRepository();
 
   String? _did;
@@ -27,10 +33,14 @@ class _State extends State<ProfileScreen> {
   List<Map<String, dynamic>> _rankings = [];
   bool _loading = true;
   String? _nickname;
+  String? _avatarUrl;
+  Uint8List? _avatarBytes;
+  ModalRoute<void>? _route;
 
   @override
   void initState() {
     super.initState();
+    ProfileCache.addListener(_onProfileCache);
     final cached = ProfileCache.latest;
     if (cached != null) {
       _apply(cached);
@@ -39,9 +49,48 @@ class _State extends State<ProfileScreen> {
     _load();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route != _route) {
+      if (_route != null) appRouteObserver.unsubscribe(this);
+      _route = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    ProfileCache.removeListener(_onProfileCache);
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    final cached = ProfileCache.latest;
+    if (cached != null && mounted) {
+      setState(() => _apply(cached));
+    }
+    _load();
+  }
+
+  void _onProfileCache() {
+    final cached = ProfileCache.latest;
+    if (!mounted || cached == null) return;
+    setState(() => _apply(cached));
+  }
+
   void _apply(ProfileSnapshot snapshot) {
+    final previousUrl = _avatarUrl;
     _did = snapshot.did;
     _nickname = snapshot.nickname;
+    _avatarUrl = snapshot.avatarUrl;
+    _avatarBytes = snapshot.avatarBytes;
+    if (previousUrl != null && previousUrl != _avatarUrl) {
+      PaintingBinding.instance.imageCache.evict(NetworkImage(previousUrl));
+    }
     _points = snapshot.points;
     _unlocked = Set<String>.from(snapshot.unlocked);
     _rankings = List<Map<String, dynamic>>.from(snapshot.rankings);
@@ -114,23 +163,13 @@ class _State extends State<ProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Theme.of(context).colorScheme.primary,
-                                  Theme.of(context).colorScheme.secondary,
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(
-                              Icons.fingerprint,
-                              color: Colors.white,
-                              size: 30,
-                            ),
+                          UserAvatar(
+                            size: 52,
+                            url: _avatarUrl,
+                            bytes: _avatarBytes,
+                            borderRadius: BorderRadius.circular(26),
+                            imageForUrl: widget.imageForUrl,
+                            onTap: () => context.push('/settings/avatar'),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -188,6 +227,7 @@ class _State extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 Card(
                   child: ListTile(
+                    contentPadding: chevronTilePadding,
                     leading: const Icon(Icons.people_outline),
                     title: const Text('数民广场'),
                     trailing: const Icon(Icons.chevron_right),

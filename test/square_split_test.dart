@@ -56,20 +56,12 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await _flush(tester);
 
-    expect(find.text('选一个话题'), findsOneWidget);
-    expect(find.text('区块链技术'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '区块链技术'), findsOneWidget);
+    expect(_tile(tester, '区块链技术').selected, isTrue);
     expect(find.text('密码学讨论'), findsOneWidget);
     expect(find.text('DID 与 Web3 身份'), findsOneWidget);
     expect(find.text('反诈经验交流'), findsOneWidget);
-
-    await tester.tap(find.text('区块链技术'));
-    await _afterNav(tester);
-    expect(_tile(tester, '区块链技术').selected, isTrue);
-    expect(find.widgetWithText(AppBar, '区块链技术'), findsOneWidget);
-    expect(
-      tester.getSize(find.byType(TextField)).width,
-      greaterThan(WindowLayout.readingMaxWidth),
-    );
+    expect(tester.getSize(find.byType(TextField)).width, greaterThan(400));
 
     await tester.enterText(find.byType(TextField), '你好');
     await tester.tap(find.byIcon(Icons.send_rounded));
@@ -82,9 +74,9 @@ void main() {
     expect(find.widgetWithText(AppBar, '密码学讨论'), findsOneWidget);
 
     await _pop(tester);
-    expect(find.text('选一个话题'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '区块链技术'), findsOneWidget);
     expect(find.widgetWithText(AppBar, '密码学讨论'), findsNothing);
-    expect(find.text('区块链技术'), findsOneWidget);
+    expect(_tile(tester, '区块链技术').selected, isTrue);
   });
 
   testWidgets('宽窗口广场列表只请求一次个人资料', (tester) async {
@@ -93,11 +85,7 @@ void main() {
     addTearDown(router.dispose);
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await _flush(tester);
-    expect(adapter.profileGets, 1);
-
-    await tester.tap(find.text('区块链技术'));
-    await _afterNav(tester);
-    // 聊天页仍会读一次显示名。多出来的那次来自聊天页，不是第二份广场列表。
+    // 列表一次，默认打开的第一个房间再读一次显示名。
     expect(adapter.profileGets, 2);
 
     await tester.tap(find.text('密码学讨论'));

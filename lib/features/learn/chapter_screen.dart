@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/models/chapter.dart';
 import '../../core/progress/progress_store.dart';
 import 'learn_repository.dart';
@@ -62,13 +63,21 @@ class _State extends State<ChapterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_detail == null)
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_detail == null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: appBarLeading(context),
+          title: const Text('章节'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     final card = _detail!.cards[_index];
     final isLast = _index == _detail!.cards.length - 1;
 
     return Scaffold(
       appBar: AppBar(
+        leading: appBarLeading(context),
         title: Text('${_index + 1} / ${_detail!.cards.length}'),
         actions: [
           TextButton(

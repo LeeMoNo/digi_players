@@ -1,5 +1,8 @@
 // lib/features/profile/profile_repository.dart
+import 'dart:typed_data';
+
 import '../../core/api/api_client.dart';
+import '../../core/avatar_url.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/models/badge.dart';
 import '../learn/learn_path.dart';
@@ -8,6 +11,8 @@ class ProfileSnapshot {
   const ProfileSnapshot({
     required this.did,
     required this.nickname,
+    this.avatarUrl,
+    this.avatarBytes,
     required this.points,
     required this.unlocked,
     required this.rankings,
@@ -15,6 +20,8 @@ class ProfileSnapshot {
 
   final String? did;
   final String? nickname;
+  final String? avatarUrl;
+  final Uint8List? avatarBytes;
   final int points;
   final Set<String> unlocked;
   final List<Map<String, dynamic>> rankings;
@@ -24,6 +31,21 @@ class ProfileSnapshot {
 class ProfileCache {
   static ProfileSnapshot? latest;
   static int _ticket = 0;
+  static final List<void Function()> _listeners = [];
+
+  static void addListener(void Function() listener) {
+    _listeners.add(listener);
+  }
+
+  static void removeListener(void Function() listener) {
+    _listeners.remove(listener);
+  }
+
+  static void _notify() {
+    for (final listener in List<void Function()>.of(_listeners)) {
+      listener();
+    }
+  }
 
   static int begin() => ++_ticket;
 
@@ -33,6 +55,33 @@ class ProfileCache {
     latest = null;
     _ticket++;
   }
+
+  /// 换头像后立刻改缓存，并作废还在飞的那次个人页加载。
+  static void rememberAvatar(String? url, {Uint8List? bytes}) {
+    final current = latest;
+    if (current == null) return;
+    final Uint8List? nextBytes;
+    if (url == null) {
+      nextBytes = null;
+    } else if (bytes != null) {
+      nextBytes = bytes;
+    } else if (url == current.avatarUrl) {
+      nextBytes = current.avatarBytes;
+    } else {
+      nextBytes = null;
+    }
+    _ticket++;
+    latest = ProfileSnapshot(
+      did: current.did,
+      nickname: current.nickname,
+      avatarUrl: url,
+      avatarBytes: nextBytes,
+      points: current.points,
+      unlocked: current.unlocked,
+      rankings: current.rankings,
+    );
+    _notify();
+  }
 }
 
 class ProfileRepository {
@@ -41,9 +90,17 @@ class ProfileRepository {
     final base = previous != null && previous.did == did ? previous : null;
 
     String? nickname = base?.nickname;
+    String? avatarUrl = base?.avatarUrl;
+    Uint8List? avatarBytes = base?.avatarBytes;
     try {
       final res = await ApiClient.dio.get('/user/profile');
-      nickname = res.data['display_name'] as String?;
+      final data = res.data;
+      if (data is Map) {
+        nickname = data['display_name'] as String?;
+        final nextUrl = absoluteAvatarUrl(data['avatar_url'] as String?);
+        avatarBytes = nextUrl == avatarUrl ? avatarBytes : null;
+        avatarUrl = nextUrl;
+      }
     } catch (_) {}
 
     final points = await fetchTotalPoints();
@@ -58,6 +115,8 @@ class ProfileRepository {
     return ProfileSnapshot(
       did: did,
       nickname: nickname,
+      avatarUrl: avatarUrl,
+      avatarBytes: avatarBytes,
       points: points ?? base?.points ?? 0,
       unlocked: unlocked,
       rankings: rankings ?? base?.rankings ?? const [],

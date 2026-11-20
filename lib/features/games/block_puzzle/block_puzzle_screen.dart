@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/layout/fold_side.dart';
+import '../../../core/router/app_back_button.dart';
 import '../../../core/models/badge.dart';
 import '../../../core/progress/progress_store.dart';
 import '../../learn/learn_path.dart';
@@ -181,6 +182,7 @@ class _State extends State<BlockPuzzleScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: appBarLeading(context),
         title: const Text('区块链拼图'),
         actions: [
           Center(

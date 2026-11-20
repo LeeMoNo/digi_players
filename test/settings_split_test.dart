@@ -63,6 +63,15 @@ void main() {
     await _pop(tester);
     expect(find.text('我的昵称'), findsOneWidget);
 
+    await tester.tap(find.text('我的头像'));
+    await _afterNav(tester);
+    expect(find.widgetWithText(AppBar, '我的头像'), findsOneWidget);
+    expect(find.text('从相册选择'), findsOneWidget);
+    expect(find.text('拍照'), findsOneWidget);
+
+    await _pop(tester);
+    expect(find.text('我的昵称'), findsOneWidget);
+
     await tester.tap(find.text('查看助记词'));
     await _afterNav(tester);
     expect(find.widgetWithText(AppBar, '查看助记词'), findsOneWidget);
@@ -79,7 +88,9 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await _flush(tester);
 
-    expect(find.text('选一项'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '设置昵称'), findsOneWidget);
+    expect(find.text('我的昵称'), findsOneWidget);
+    expect(find.byIcon(Icons.menu), findsNothing);
     expect(find.text('版本'), findsOneWidget);
     expect(find.text('退出登录'), findsOneWidget);
 
@@ -99,7 +110,7 @@ void main() {
     expect(pane.width, greaterThan(400));
 
     await _pop(tester);
-    expect(find.text('选一项'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '设置昵称'), findsOneWidget);
     expect(find.widgetWithText(AppBar, '查看助记词'), findsNothing);
   });
 
@@ -134,7 +145,7 @@ void main() {
     expect(find.widgetWithText(AppBar, '设置昵称'), findsNothing);
 
     await _pop(tester);
-    expect(find.text('选一项'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, '设置昵称'), findsOneWidget);
     expect(find.widgetWithText(AppBar, '查看助记词'), findsNothing);
     expect(find.text('English'), findsOneWidget);
   });

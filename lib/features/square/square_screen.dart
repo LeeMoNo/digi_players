@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/display_name.dart';
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout_host.dart';
 import '../../core/storage/secure_storage.dart';
 
@@ -52,7 +54,13 @@ class _State extends State<SquareScreen> {
       context.push(location, extra: room.name);
       return;
     }
-    if (widget.selectedRoomId != null) {
+    final path = GoRouterState.of(context).uri.path;
+    const prefix = '/square/chat/';
+    final opened =
+        path.startsWith(prefix) &&
+        path.substring(prefix.length).isNotEmpty &&
+        !path.substring(prefix.length).contains('/');
+    if (opened) {
       context.pushReplacement(location, extra: room.name);
     } else {
       context.push(location, extra: room.name);
@@ -62,7 +70,10 @@ class _State extends State<SquareScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('数民广场')),
+      appBar: AppBar(
+        leading: appBarLeading(context),
+        title: const Text('数民广场'),
+      ),
       body: ReadingWidth(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -144,10 +155,13 @@ class _RoomConfig {
   });
 }
 
+const squareDefaultRoomId = 'blockchain';
+const squareDefaultRoomName = '区块链技术';
+
 const _rooms = [
   _RoomConfig(
-    id: 'blockchain',
-    name: '区块链技术',
+    id: squareDefaultRoomId,
+    name: squareDefaultRoomName,
     description: 'Layer2、共识机制、跨链桥',
     icon: Icons.hub,
     color: Colors.teal,
@@ -189,7 +203,7 @@ class _RoomTile extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 10),
     child: ListTile(
       selected: selected,
-      contentPadding: const EdgeInsets.all(14),
+      contentPadding: chevronPadding(const EdgeInsets.all(14)),
       leading: Container(
         width: 44,
         height: 44,

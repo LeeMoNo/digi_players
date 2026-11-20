@@ -2,10 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout_host.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/storage/secure_storage.dart';
+import '../games/games_home_screen.dart';
+import '../learn/learn_home_screen.dart';
 import '../points/profile_repository.dart';
 import 'language_screen.dart';
 import 'theme_screen.dart';
@@ -22,7 +26,13 @@ class SettingsScreen extends ConsumerWidget {
       context.push(location);
       return;
     }
-    if (selectedDetail != null) {
+    final path = GoRouterState.of(context).uri.path;
+    const prefix = '/settings/';
+    final opened =
+        path.startsWith(prefix) &&
+        path.substring(prefix.length).isNotEmpty &&
+        !path.substring(prefix.length).contains('/');
+    if (opened) {
       context.pushReplacement(location);
     } else {
       context.push(location);
@@ -34,23 +44,33 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(appSettingsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(leading: appBarLeading(context), title: const Text('设置')),
       body: ReadingWidth(
         child: ListView(
           children: [
             // ── 个人资料 ──────────────────────────────────
             _SectionHeader('个人资料'),
             ListTile(
+              contentPadding: chevronTilePadding,
               selected: selectedDetail == 'nickname',
               leading: const Icon(Icons.badge_outlined),
               title: const Text('我的昵称'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _open(context, 'nickname'),
             ),
+            ListTile(
+              contentPadding: chevronTilePadding,
+              selected: selectedDetail == 'avatar',
+              leading: const Icon(Icons.account_circle_outlined),
+              title: const Text('我的头像'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(context, 'avatar'),
+            ),
 
             // ── 显示 ──────────────────────────────────────
             _SectionHeader('显示'),
             ListTile(
+              contentPadding: chevronTilePadding,
               selected: selectedDetail == 'language',
               leading: const Icon(Icons.language),
               title: const Text('语言'),
@@ -59,6 +79,7 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => _open(context, 'language'),
             ),
             ListTile(
+              contentPadding: chevronTilePadding,
               selected: selectedDetail == 'theme',
               leading: const Icon(Icons.brightness_6_outlined),
               title: const Text('主题'),
@@ -69,6 +90,7 @@ class SettingsScreen extends ConsumerWidget {
             // ── 安全 ──────────────────────────────────────
             _SectionHeader('安全'),
             ListTile(
+              contentPadding: chevronTilePadding,
               selected: selectedDetail == 'mnemonic',
               leading: const Icon(Icons.vpn_key_outlined),
               title: const Text('查看助记词'),
@@ -121,6 +143,8 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (confirm == true && context.mounted) {
       ProfileCache.clear();
+      LearnHomeCache.clear();
+      GamesHomeCache.clear();
       await SecureStorage.clearAll();
       if (context.mounted) context.go('/register');
     }

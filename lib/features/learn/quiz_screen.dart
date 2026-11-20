@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import '../../core/models/chapter.dart';
 import '../../core/progress/progress_store.dart';
 import '../../core/utils/shuffled_options.dart';
@@ -128,7 +129,13 @@ class _State extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     if (_detail == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(
+          leading: appBarLeading(context),
+          title: const Text('测验'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
     if (_finished) return _result();
 
@@ -137,6 +144,7 @@ class _State extends State<QuizScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: appBarLeading(context),
         title: Text('测验 ${_qIndex + 1}/${_detail!.quizQuestions.length}'),
       ),
       body: ReadingWidth(

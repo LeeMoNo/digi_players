@@ -72,7 +72,7 @@ void main() {
     await tester.pump();
 
     final list = tester.getRect(find.byKey(const Key('learn-home-scroll')));
-    final rail = tester.getRect(find.byType(NavigationRail));
+    final rail = tester.getRect(find.byKey(const Key('main-rail')));
     expect(list.width, closeTo(WindowLayout.readingMaxWidth, 1));
     expect(list.center.dx, closeTo(rail.right + (1200 - rail.right) / 2, 1));
     expect(list.bottom, closeTo(800, 1));
@@ -103,7 +103,7 @@ void main() {
       router.go(path);
       await tester.pump();
       await tester.pump(Duration.zero);
-      final rail = tester.getRect(find.byType(NavigationRail));
+      final rail = tester.getRect(find.byKey(const Key('main-rail')));
       final slot = 1200 - rail.width;
       expect(_widestContent(tester), greaterThan(slot - 48));
     }

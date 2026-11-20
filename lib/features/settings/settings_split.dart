@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/layout/split_pane.dart';
+import 'nickname_screen.dart';
 import 'settings_screen.dart';
 
 /// `/settings/` 后面的子页。停在设置列表时没有。
@@ -51,8 +52,8 @@ class SettingsSplitShell extends StatelessWidget {
           child: splitting
               ? SplitPane(
                   showDetail: detailId != null,
-                  emptyText: '选一项',
-                  list: SettingsScreen(selectedDetail: detailId),
+                  placeholder: const NicknameScreen(),
+                  list: SettingsScreen(selectedDetail: detailId ?? 'nickname'),
                   detail: child,
                 )
               : child,

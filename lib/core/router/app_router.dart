@@ -11,6 +11,7 @@ import 'package:digi_players/features/learn/library_screen.dart';
 import 'package:digi_players/features/learn/library_split.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
 import 'package:digi_players/features/points/profile_screen.dart';
+import 'package:digi_players/features/settings/avatar_screen.dart';
 import 'package:digi_players/features/settings/language_screen.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
 import 'package:digi_players/features/settings/nickname_screen.dart';
@@ -149,6 +150,10 @@ GoRouter createAppRouter({required String initialLocation}) {
                   GoRoute(
                     path: 'nickname',
                     builder: (_, __) => const NicknameScreen(),
+                  ),
+                  GoRoute(
+                    path: 'avatar',
+                    builder: (_, __) => const AvatarScreen(),
                   ),
                   GoRoute(
                     path: 'mnemonic',

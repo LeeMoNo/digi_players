@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
-  test('平坦且短边为 0 时双栏分界仍是 240', () {
+  test('平坦且短边为 0 时中栏和右栏对半', () {
     final seam = foldSeamFromFeature(
       type: 'hinge',
       posture: 'flat',
@@ -33,7 +33,10 @@ void main() {
       seam: seam,
     );
     expect(plan.split, isTrue);
-    expect(plan.listWidth, WindowLayout.listWidth);
+    expect(
+      plan.listWidth,
+      WindowLayout.evenPaneWidth(800 - WindowLayout.railWidth),
+    );
     expect(plan.gap, 1);
   });
 
@@ -148,7 +151,7 @@ void main() {
     expect(closed.split, isFalse);
   });
 
-  testWidgets('缝宽为 0 时资料双栏仍以 240 分隔', (tester) async {
+  testWidgets('缝宽为 0 时资料中栏和右栏对半', (tester) async {
     await _surface(tester, const Size(820, 1180));
     final router = createAppRouter(initialLocation: '/learn/library');
     addTearDown(router.dispose);
@@ -160,16 +163,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('选一节资料'), findsOneWidget);
+    final scroll = tester.getSize(find.byKey(const Key('library-scroll')));
     expect(
-      tester.getSize(find.byKey(const Key('library-scroll'))).width,
-      closeTo(WindowLayout.listWidth, 1),
+      scroll.width,
+      closeTo(WindowLayout.evenPaneWidth(820 - WindowLayout.railWidth), 1),
     );
-    expect(
-      tester.widget<VerticalDivider>(find.byType(VerticalDivider)).width,
-      1,
-    );
-    expect(_gapWidth(tester, WindowLayout.listWidth), 1);
+    expect(find.byType(VerticalDivider), findsNothing);
   });
 
   testWidgets('竖缝把资料分界移到折痕', (tester) async {
@@ -184,7 +183,7 @@ void main() {
     expect(scroll.right, closeTo(seam.left, 1));
     expect(_gapWidth(tester, scroll.width), seam.width);
     expect(
-      tester.getRect(find.text('选一节资料')).left,
+      tester.getRect(find.text('共有的账本')).left,
       greaterThanOrEqualTo(seam.right),
     );
   });

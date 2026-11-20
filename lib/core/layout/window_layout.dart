@@ -13,7 +13,7 @@ class WindowLayout {
   /// 侧栏预留。图标在上、文字在下，不是展开的侧栏。
   static const railWidth = 80.0;
 
-  /// 双栏左侧宽度。
+  /// 判断能不能分栏时，按这个宽度估算列表。排出来的两栏是对半，不固定用这个值。
   static const listWidth = 240.0;
 
   /// 双栏右侧至少要有这么宽。
@@ -65,6 +65,12 @@ class WindowLayout {
     };
     final canSplit = wide && usable - railWidth - listWidth >= detailMinWidth;
     return WindowLayout(wide: wide, canSplit: canSplit);
+  }
+
+  /// 三栏时中栏和右栏对半。
+  static double evenPaneWidth(double slot) {
+    if (!slot.isFinite || slot <= 0) return 0;
+    return slot / 2;
   }
 }
 
@@ -182,9 +188,9 @@ FoldSplit resolveFoldSplit({
   required double contentStart,
   FoldSeam? seam,
 }) {
-  const plain = FoldSplit(
+  final plain = FoldSplit(
     split: true,
-    listWidth: WindowLayout.listWidth,
+    listWidth: WindowLayout.evenPaneWidth(rightEdge - contentStart),
     gap: 1,
     anchorStart: true,
   );

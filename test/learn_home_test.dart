@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  tearDown(LearnHomeCache.clear);
+
   test('只完成第一节时，下一步是区块链拼图', () {
     const progress = LearnPathProgress(chapter1: true);
     final step = nextLearnStep(progress);
@@ -82,6 +84,52 @@ void main() {
     expect(find.text('重试'), findsOneWidget);
     expect(find.text('今天的题暂时取不到'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('再次进入学习页先显示上次进度，不再出现读取中', (tester) async {
+    var calls = 0;
+    Future<LearnPathProgress> progress() async {
+      calls++;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      return calls == 1
+          ? const LearnPathProgress()
+          : const LearnPathProgress(chapter1: true);
+    }
+
+    Widget page() {
+      return MaterialApp(
+        home: LearnHomeScreen(
+          loadProgress: progress,
+          loadChapters: () async {
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          },
+          dailyTask: const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(page());
+    expect(find.text('正在读取章节'), findsOneWidget);
+    expect(find.text('继续阅读'), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump();
+    expect(find.text('正在读取章节'), findsNothing);
+    expect(find.text('继续阅读'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pumpWidget(page());
+    await tester.pump();
+    expect(find.text('正在读取章节'), findsNothing);
+    expect(find.text('继续阅读'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump();
+    expect(find.text('去做练习'), findsOneWidget);
+    expect(find.text('正在读取章节'), findsNothing);
   });
 
   testWidgets('资料页按时间列出小节，外链仍在', (tester) async {

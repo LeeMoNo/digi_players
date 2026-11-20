@@ -20,7 +20,7 @@ void main() {
 
     expect(find.text(_ledger), findsOneWidget);
     expect(find.text('选一节资料'), findsNothing);
-    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
   });
 
   testWidgets('窄窗口整页进入资料，相关资料返回学习首页', (tester) async {
@@ -63,14 +63,16 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
-    expect(find.text('选一节资料'), findsOneWidget);
-    expect(find.text(_ledger), findsOneWidget);
-
-    await tester.tap(find.text(_ledger));
-    await tester.pumpAndSettle();
     expect(find.text('共有的账本'), findsOneWidget);
     expect(find.text(_ledger), findsOneWidget);
     expect(_tile(tester, _ledger).selected, isTrue);
+    final listWidth = tester
+        .getSize(find.byKey(const Key('library-scroll')))
+        .width;
+    expect(
+      listWidth,
+      closeTo(WindowLayout.evenPaneWidth(820 - WindowLayout.railWidth), 1),
+    );
 
     await tester.tap(find.text(_work));
     await tester.pumpAndSettle();
@@ -79,9 +81,9 @@ void main() {
     expect(_tile(tester, _ledger).selected, isFalse);
 
     await _pop(tester);
-    expect(find.text('选一节资料'), findsOneWidget);
     expect(find.text('为什么要花算力'), findsNothing);
-    expect(find.text(_ledger), findsOneWidget);
+    expect(find.text('共有的账本'), findsOneWidget);
+    expect(_tile(tester, _ledger).selected, isTrue);
   });
 
   testWidgets('669 宽且没有安全区时仍是左右栏', (tester) async {
@@ -91,9 +93,10 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
-    expect(find.text('选一节资料'), findsOneWidget);
+    expect(find.byKey(const Key('main-rail')), findsOneWidget);
+    expect(find.text('共有的账本'), findsOneWidget);
     expect(find.text(_ledger), findsOneWidget);
+    expect(_tile(tester, _ledger).selected, isTrue);
   });
 
   testWidgets('安全区扣掉后不够宽时只有侧栏和单栏', (tester) async {
@@ -103,7 +106,7 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byKey(const Key('main-rail')), findsOneWidget);
     expect(find.text('选一节资料'), findsNothing);
     await tester.tap(find.text(_ledger));
     await tester.pumpAndSettle();
@@ -179,9 +182,8 @@ GoRouter _router() {
                   ),
                   GoRoute(
                     path: 'library/:eraId',
-                    builder: (_, state) => EraDetailScreen(
-                      eraId: state.pathParameters['eraId']!,
-                    ),
+                    builder: (_, state) =>
+                        EraDetailScreen(eraId: state.pathParameters['eraId']!),
                   ),
                 ],
               ),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  tearDown(GamesHomeCache.clear);
+
   test('拼图通关后去做哈希碰碰乐', () {
     final step = practiceClearDestination(
       practice: 'block',
@@ -75,10 +77,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: GamesHomeScreen(
-          loadProgress: () async => (
-            chapters: <String>{},
-            games: {'game_block'},
-          ),
+          loadProgress: () async =>
+              (chapters: <String>{}, games: {'game_block'}),
         ),
       ),
     );
@@ -105,6 +105,49 @@ void main() {
     expect(
       find.descendant(of: hash, matching: find.textContaining('后解锁')),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('再次进入练习页先显示上次解锁状态', (tester) async {
+    var calls = 0;
+    Future<({Set<String> chapters, Set<String> games})> load() async {
+      calls++;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      if (calls == 1) {
+        return (chapters: <String>{}, games: {'game_block'});
+      }
+      return (chapters: <String>{'ch_001'}, games: {'game_block', 'game_hash'});
+    }
+
+    Widget page() {
+      return MaterialApp(home: GamesHomeScreen(loadProgress: load));
+    }
+
+    await tester.pumpWidget(page());
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump();
+    expect(find.text('已完成'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pumpWidget(page());
+    await tester.pump();
+    expect(find.text('已完成'), findsOneWidget);
+
+    final hash = find.ancestor(
+      of: find.text('哈希碰碰乐'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(of: hash, matching: find.textContaining('后解锁')),
+      findsOneWidget,
+    );
+
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump();
+    expect(
+      find.descendant(of: hash, matching: find.textContaining('后解锁')),
+      findsNothing,
     );
   });
 }

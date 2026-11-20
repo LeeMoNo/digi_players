@@ -11,13 +11,15 @@ class SplitPane extends StatelessWidget {
     required this.showDetail,
     required this.list,
     required this.detail,
-    required this.emptyText,
+    required this.placeholder,
   });
 
   final bool showDetail;
   final Widget list;
   final Widget detail;
-  final String emptyText;
+
+  /// 还没点进下一级时，右栏显示这一页，并让导航器留在树里。
+  final Widget placeholder;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class SplitPane extends StatelessWidget {
         }
         final seam = WindowLayoutScope.foldOf(context);
         if (seam == null || !seam.vertical) {
-          return _panes(WindowLayout.listWidth, 1);
+          return _panes(null, 0);
         }
         return FoldFrame(
           builder: (context, origin) {
@@ -76,25 +78,24 @@ class SplitPane extends StatelessWidget {
     );
   }
 
-  Widget _panes(double listWidth, double gap) {
+  Widget _panes(double? listWidth, double gap) {
+    final detailPane = showDetail
+        ? detail
+        : Stack(
+            children: [
+              Offstage(child: detail),
+              placeholder,
+            ],
+          );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(width: listWidth, child: list),
-        if (gap <= 1)
-          const VerticalDivider(width: 1, thickness: 1)
+        if (listWidth == null)
+          Expanded(child: list)
         else
-          SizedBox(width: gap),
-        Expanded(
-          child: showDetail
-              ? detail
-              : Stack(
-                  children: [
-                    Offstage(child: detail),
-                    Center(child: Text(emptyText)),
-                  ],
-                ),
-        ),
+          SizedBox(width: listWidth, child: list),
+        if (gap > 1) SizedBox(width: gap),
+        Expanded(child: detailPane),
       ],
     );
   }

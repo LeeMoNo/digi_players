@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/layout/split_pane.dart';
+import 'square_chat_screen.dart';
 import 'square_screen.dart';
 
 /// `/square/chat/` 后面的房间 id。停在列表时没有。
@@ -51,8 +52,13 @@ class SquareSplitShell extends StatelessWidget {
           child: splitting
               ? SplitPane(
                   showDetail: roomId != null,
-                  emptyText: '选一个话题',
-                  list: SquareScreen(selectedRoomId: roomId),
+                  placeholder: const SquareChatScreen(
+                    room: squareDefaultRoomId,
+                    roomName: squareDefaultRoomName,
+                  ),
+                  list: SquareScreen(
+                    selectedRoomId: roomId ?? squareDefaultRoomId,
+                  ),
                   detail: child,
                 )
               : child,

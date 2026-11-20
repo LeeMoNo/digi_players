@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/layout/reading_width.dart';
+import '../../core/router/app_back_button.dart';
 import 'data/home_content.dart';
 
 /// 警防诈骗子页：安全清单全文、套路库、识别信号、出事怎么办
@@ -13,7 +14,10 @@ class FraudScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('警防诈骗')),
+      appBar: AppBar(
+        leading: appBarLeading(context),
+        title: const Text('警防诈骗'),
+      ),
       body: ReadingWidth(
         child: ListView(
           padding: const EdgeInsets.all(16),

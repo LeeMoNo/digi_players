@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/layout/fold_side.dart';
+import '../../../core/router/app_back_button.dart';
 import '../../../core/layout/window_layout.dart';
 import '../../../core/layout/window_layout_host.dart';
 import '../../../core/models/badge.dart';
@@ -183,6 +184,7 @@ class _State extends State<P2PGameScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1D2E),
       appBar: AppBar(
+        leading: appBarLeading(context),
         backgroundColor: const Color(0xFF1A1D2E),
         foregroundColor: Colors.white,
         title: Text(

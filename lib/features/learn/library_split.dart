@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/layout/split_pane.dart';
+import '../home/data/home_content.dart';
 import 'library_screen.dart';
 
 /// `/learn/library` 后面的那一段年代 id。停在目录时没有。
@@ -46,13 +47,14 @@ class LibrarySplitShell extends StatelessWidget {
       builder: (context, constraints) {
         final splitting = splitPaneFits(context, constraints);
         final eraId = libraryEraId(GoRouterState.of(context).uri.path);
+        final firstId = HomeContent.eraSections.first.id;
         return LibrarySplitScope(
           splitting: splitting,
           child: splitting
               ? SplitPane(
                   showDetail: eraId != null,
-                  emptyText: '选一节资料',
-                  list: LibraryScreen(selectedEraId: eraId),
+                  placeholder: EraDetailScreen(eraId: firstId),
+                  list: LibraryScreen(selectedEraId: eraId ?? firstId),
                   detail: child,
                 )
               : child,

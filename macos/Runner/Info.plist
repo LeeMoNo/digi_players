@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>用于选择并更换你的头像。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>用于拍摄并更换你的头像。</string>
 </dict>
 </plist>
