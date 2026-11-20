@@ -8,13 +8,16 @@ import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/library_screen.dart';
+import 'package:digi_players/features/learn/library_split.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
 import 'package:digi_players/features/points/profile_screen.dart';
+import 'package:digi_players/features/settings/language_screen.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
 import 'package:digi_players/features/settings/nickname_screen.dart';
-import 'package:digi_players/features/settings/settings_screen.dart';
+import 'package:digi_players/features/settings/settings_split.dart';
+import 'package:digi_players/features/settings/theme_screen.dart';
 import 'package:digi_players/features/square/square_chat_screen.dart';
-import 'package:digi_players/features/square/square_screen.dart';
+import 'package:digi_players/features/square/square_split.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,10 +61,7 @@ GoRouter createAppRouter({required String initialLocation}) {
         path: '/recover',
         builder: (context, state) => const RecoverScreen(),
       ),
-      GoRoute(
-        path: '/intro',
-        builder: (context, state) => const IntroScreen(),
-      ),
+      GoRoute(path: '/intro', builder: (context, state) => const IntroScreen()),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -69,15 +69,18 @@ GoRouter createAppRouter({required String initialLocation}) {
             path: '/learn',
             builder: (_, __) => const LearnHomeScreen(),
             routes: [
-              GoRoute(
-                path: 'library',
-                builder: (_, __) => const LibraryScreen(),
+              ShellRoute(
+                builder: (context, state, child) =>
+                    LibrarySplitShell(child: child),
                 routes: [
                   GoRoute(
-                    path: ':eraId',
-                    builder: (_, state) => EraDetailScreen(
-                      eraId: state.pathParameters['eraId']!,
-                    ),
+                    path: 'library',
+                    builder: (_, __) => const LibraryRoute(),
+                  ),
+                  GoRoute(
+                    path: 'library/:eraId',
+                    builder: (_, state) =>
+                        EraDetailScreen(eraId: state.pathParameters['eraId']!),
                   ),
                 ],
               ),
@@ -109,31 +112,57 @@ GoRouter createAppRouter({required String initialLocation}) {
             ],
           ),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-          GoRoute(path: '/square', builder: (_, __) => const SquareScreen()),
-          GoRoute(
-            path: '/settings',
-            builder: (_, __) => const SettingsScreen(),
+          ShellRoute(
+            builder: (context, state, child) => SquareSplitShell(child: child),
+            routes: [
+              GoRoute(
+                path: '/square',
+                builder: (_, __) => const SquareRoute(),
+                routes: [
+                  GoRoute(
+                    path: 'chat/:room',
+                    builder: (_, state) => SquareChatScreen(
+                      room: state.pathParameters['room']!,
+                      roomName: state.extra as String? ?? '广场',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/settings/nickname',
-            builder: (_, __) => const NicknameScreen(),
-          ),
-          GoRoute(
-            path: '/settings/mnemonic',
-            builder: (_, __) => const MnemonicViewScreen(),
+          ShellRoute(
+            builder: (context, state, child) =>
+                SettingsSplitShell(child: child),
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (_, __) => const SettingsRoute(),
+                routes: [
+                  GoRoute(
+                    path: 'language',
+                    builder: (_, __) => const LanguageScreen(),
+                  ),
+                  GoRoute(
+                    path: 'theme',
+                    builder: (_, __) => const ThemeScreen(),
+                  ),
+                  GoRoute(
+                    path: 'nickname',
+                    builder: (_, __) => const NicknameScreen(),
+                  ),
+                  GoRoute(
+                    path: 'mnemonic',
+                    builder: (_, __) => const MnemonicViewScreen(),
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/game/block-puzzle',
             builder: (_, __) => const BlockPuzzleScreen(),
           ),
           GoRoute(path: '/game/p2p', builder: (_, __) => const P2PGameScreen()),
-          GoRoute(
-            path: '/square/chat/:room',
-            builder: (_, state) => SquareChatScreen(
-              room: state.pathParameters['room']!,
-              roomName: state.extra as String? ?? '广场',
-            ),
-          ),
         ],
       ),
     ],

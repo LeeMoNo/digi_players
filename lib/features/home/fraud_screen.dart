@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/layout/reading_width.dart';
 import 'data/home_content.dart';
 
 /// 警防诈骗子页：安全清单全文、套路库、识别信号、出事怎么办
@@ -13,30 +14,32 @@ class FraudScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('警防诈骗')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _SectionHeader(title: '安全清单', icon: Icons.verified_user_outlined),
-          ...HomeContent.fraudChecklist.map(
-            (item) => _ChecklistTile(item: item),
-          ),
-          const SizedBox(height: 24),
-          _SectionHeader(title: '常见套路', icon: Icons.warning_amber_outlined),
-          ...HomeContent.fraudScamPatterns.map(
-            (scam) => _ScamCard(
-              scam: scam,
-              highlighted: scam.id == highlightScamId,
+      body: ReadingWidth(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _SectionHeader(title: '安全清单', icon: Icons.verified_user_outlined),
+            ...HomeContent.fraudChecklist.map(
+              (item) => _ChecklistTile(item: item),
             ),
-          ),
-          const SizedBox(height: 24),
-          _SectionHeader(title: '识别信号', icon: Icons.search_outlined),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: HomeContent.fraudRecognitionSignals
-                    .map((s) => Padding(
+            const SizedBox(height: 24),
+            _SectionHeader(title: '常见套路', icon: Icons.warning_amber_outlined),
+            ...HomeContent.fraudScamPatterns.map(
+              (scam) => _ScamCard(
+                scam: scam,
+                highlighted: scam.id == highlightScamId,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _SectionHeader(title: '识别信号', icon: Icons.search_outlined),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: HomeContent.fraudRecognitionSignals
+                      .map(
+                        (s) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,43 +48,45 @@ class FraudScreen extends StatelessWidget {
                               Expanded(child: Text(s)),
                             ],
                           ),
-                        ))
-                    .toList(),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          _SectionHeader(title: '出事怎么办', icon: Icons.emergency_outlined),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var i = 0; i < HomeContent.fraudWhatToDo.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            child: Text('${i + 1}',
-                                style: const TextStyle(fontSize: 12)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(HomeContent.fraudWhatToDo[i]),
-                          ),
-                        ],
+            const SizedBox(height: 24),
+            _SectionHeader(title: '出事怎么办', icon: Icons.emergency_outlined),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < HomeContent.fraudWhatToDo.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              child: Text(
+                                '${i + 1}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(HomeContent.fraudWhatToDo[i])),
+                          ],
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 32),
-        ],
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }
@@ -118,7 +123,10 @@ class _ChecklistTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ExpansionTile(
-        title: Text(item.shortTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          item.shortTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -144,16 +152,20 @@ class _ScamCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: highlighted ? colorScheme.errorContainer.withValues(alpha: 0.3) : null,
+      color: highlighted
+          ? colorScheme.errorContainer.withValues(alpha: 0.3)
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(scam.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    )),
+            Text(
+              scam.title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Text(scam.detail),
             const SizedBox(height: 12),
@@ -165,10 +177,15 @@ class _ScamCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.flag_outlined,
-                        size: 16, color: colorScheme.error),
+                    Icon(
+                      Icons.flag_outlined,
+                      size: 16,
+                      color: colorScheme.error,
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(s, style: const TextStyle(fontSize: 13))),
+                    Expanded(
+                      child: Text(s, style: const TextStyle(fontSize: 13)),
+                    ),
                   ],
                 ),
               ),

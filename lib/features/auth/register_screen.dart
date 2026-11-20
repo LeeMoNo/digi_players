@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/did/did_generator.dart';
+import '../../core/layout/reading_width.dart';
+import '../../core/layout/window_layout.dart';
 import '../../core/storage/secure_storage.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -51,46 +53,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Logo 占位
-              const Icon(Icons.fingerprint, size: 80),
-              const SizedBox(height: 32),
+        child: ReadingWidth(
+          maxWidth: WindowLayout.formMaxWidth,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Logo 占位
+                const Icon(Icons.fingerprint, size: 80),
+                const SizedBox(height: 32),
 
-              Text(
-                'DigiPlayers',
-                style: Theme.of(context).textTheme.headlineLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '你的身份由你掌控，不依赖任何服务器',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
+                Text(
+                  'DigiPlayers',
+                  style: Theme.of(context).textTheme.headlineLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '你的身份由你掌控，不依赖任何服务器',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 48),
 
-              FilledButton(
-                onPressed: _isGenerating ? null : _onCreateIdentity,
-                child: _isGenerating
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('创建我的数字身份'),
-              ),
-              const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _isGenerating ? null : _onCreateIdentity,
+                  child: _isGenerating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('创建我的数字身份'),
+                ),
+                const SizedBox(height: 16),
 
-              OutlinedButton(
-                onPressed: () => context.push('/recover'),
-                child: const Text('用助记词恢复'),
-              ),
-            ],
+                OutlinedButton(
+                  onPressed: () => context.push('/recover'),
+                  child: const Text('用助记词恢复'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

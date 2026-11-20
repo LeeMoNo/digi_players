@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/did/did_auth.dart';
 import '../../core/did/did_generator.dart';
+import '../../core/layout/reading_width.dart';
+import '../../core/layout/window_layout.dart';
+import '../../core/progress/progress_store.dart';
 import '../../core/storage/secure_storage.dart';
 import 'intro_screen.dart';
 
@@ -34,7 +37,9 @@ class _RecoverScreenState extends State<RecoverScreen> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _onSubmit() async {
@@ -86,6 +91,7 @@ class _RecoverScreenState extends State<RecoverScreen> {
       saved = true;
       await SecureStorage.clearJWT();
       final result = await DIDAuth.authenticate();
+      await ProgressStore.pull();
       final route = await routeAfterAuth(result.isNewUser);
       if (!mounted) return;
       context.go(route);
@@ -94,11 +100,7 @@ class _RecoverScreenState extends State<RecoverScreen> {
     } on DioException {
       _toast('网络或服务暂时不可用。这组助记词已保存在本机，请稍后再试。');
     } catch (_) {
-      _toast(
-        saved
-            ? '网络或服务暂时不可用。这组助记词已保存在本机，请稍后再试。'
-            : '暂时无法完成恢复，请稍后再试。',
-      );
+      _toast(saved ? '网络或服务暂时不可用。这组助记词已保存在本机，请稍后再试。' : '暂时无法完成恢复，请稍后再试。');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -109,47 +111,50 @@ class _RecoverScreenState extends State<RecoverScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('恢复身份')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              '输入当时抄下的 12 个单词，用空格分开。',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              autocorrect: false,
-              enableSuggestions: false,
-              textCapitalization: TextCapitalization.none,
-              minLines: 3,
-              maxLines: 5,
-              enabled: !_busy,
-              decoration: const InputDecoration(
-                labelText: '助记词',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(),
+        child: ReadingWidth(
+          maxWidth: WindowLayout.formMaxWidth,
+          child: ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              Text(
+                '输入当时抄下的 12 个单词，用空格分开。',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              onSubmitted: (_) => _onSubmit(),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '单词数量不对或拼写错误时，会停在本页，不会改动这台设备上的身份。',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _busy ? null : _onSubmit,
-              child: _busy
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('恢复并进入'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _controller,
+                autofocus: true,
+                autocorrect: false,
+                enableSuggestions: false,
+                textCapitalization: TextCapitalization.none,
+                minLines: 3,
+                maxLines: 5,
+                enabled: !_busy,
+                decoration: const InputDecoration(
+                  labelText: '助记词',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _onSubmit(),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '单词数量不对或拼写错误时，会停在本页，不会改动这台设备上的身份。',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _busy ? null : _onSubmit,
+                child: _busy
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('恢复并进入'),
+              ),
+            ],
+          ),
         ),
       ),
     );

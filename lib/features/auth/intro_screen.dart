@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/layout/reading_width.dart';
+import '../../core/layout/window_layout.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -14,7 +17,9 @@ bool shouldShowIntro({required bool isNewUser, required bool seenIntro}) {
 Future<String> routeAfterAuth(bool isNewUser) async {
   if (!isNewUser) return '/learn';
   final seen = await _readSeenIntro();
-  return shouldShowIntro(isNewUser: true, seenIntro: seen) ? '/intro' : '/learn';
+  return shouldShowIntro(isNewUser: true, seenIntro: seen)
+      ? '/intro'
+      : '/learn';
 }
 
 Future<bool> _readSeenIntro() async {
@@ -67,30 +72,35 @@ class _IntroScreenState extends State<IntroScreen> {
           title: const Text('开始之前'),
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < _lines.length; i++) ...[
-                  Text(
-                    '${i + 1}. ${_lines[i]}',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6),
+          child: ReadingWidth(
+            maxWidth: WindowLayout.formMaxWidth,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < _lines.length; i++) ...[
+                    Text(
+                      '${i + 1}. ${_lines[i]}',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(height: 1.6),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: _leaving ? null : _start,
+                    child: _leaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('开始第一节'),
                   ),
-                  const SizedBox(height: 20),
                 ],
-                const Spacer(),
-                FilledButton(
-                  onPressed: _leaving ? null : _start,
-                  child: _leaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('开始第一节'),
-                ),
-              ],
+              ),
             ),
           ),
         ),

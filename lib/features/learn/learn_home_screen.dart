@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/layout/reading_width.dart';
 import '../../core/router/app_route_observer.dart';
 import '../home/daily_task_card.dart';
 import '../home/data/home_content.dart';
@@ -69,7 +70,8 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
     setState(() => _progress = progress);
 
     try {
-      final load = widget.loadChapters ??
+      final load =
+          widget.loadChapters ??
           () async {
             await _repo.fetchChaptersList();
           };
@@ -104,36 +106,38 @@ class _LearnHomeScreenState extends State<LearnHomeScreen> with RouteAware {
 
     return Scaffold(
       appBar: AppBar(title: const Text('学习')),
-      body: ListView(
-        key: const Key('learn-home-scroll'),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _ContinueCard(
-            loading: _loadingChapters && !_chaptersReady,
-            failed: _chaptersFailed,
-            step: step,
-            onRetry: _retry,
-          ),
-          const SizedBox(height: 12),
-          widget.dailyTask,
-          const SizedBox(height: 20),
-          Text('路径', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          for (final item in catalog) ...[
-            _CatalogTile(item: item),
-            const SizedBox(height: 8),
-          ],
-          const SizedBox(height: 8),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('资料'),
-              subtitle: const Text('年史、术语、防骗与外链'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/learn/library'),
+      body: ReadingWidth(
+        child: ListView(
+          key: const Key('learn-home-scroll'),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _ContinueCard(
+              loading: _loadingChapters && !_chaptersReady,
+              failed: _chaptersFailed,
+              step: step,
+              onRetry: _retry,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            widget.dailyTask,
+            const SizedBox(height: 20),
+            Text('路径', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final item in catalog) ...[
+              _CatalogTile(item: item),
+              const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('资料'),
+                subtitle: const Text('年史、术语、防骗与外链'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/learn/library'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -157,8 +161,8 @@ class _ContinueCard extends StatelessWidget {
     final title = failed
         ? '章节暂时取不到'
         : loading
-            ? '继续'
-            : step.title;
+        ? '继续'
+        : step.title;
     final button = failed ? '重试' : step.button;
 
     return Card(
@@ -211,8 +215,8 @@ class _CatalogTile extends StatelessWidget {
     final subtitle = item.done
         ? '已完成'
         : item.current
-            ? '进行到这里'
-            : '稍后解锁';
+        ? '进行到这里'
+        : '稍后解锁';
     final era = item.readingEraId == null
         ? null
         : HomeContent.eraById(item.readingEraId!);
@@ -224,8 +228,8 @@ class _CatalogTile extends StatelessWidget {
               item.done
                   ? Icons.check_circle
                   : item.current
-                      ? Icons.play_circle_outline
-                      : Icons.lock_outline,
+                  ? Icons.play_circle_outline
+                  : Icons.lock_outline,
             ),
             title: Text(item.title),
             subtitle: Text(subtitle),

@@ -7,7 +7,7 @@ import '../../core/storage/secure_storage.dart';
 enum ConnState { disconnected, connecting, connected, error }
 
 class SquareMessage {
-  final String type;   // 'message' | 'system' | 'history' | 'error'
+  final String type; // 'message' | 'system' | 'history' | 'error'
   final String? did;
   final String? name;
   final String body;
@@ -21,15 +21,13 @@ class SquareMessage {
     required this.time,
   });
 
-  factory SquareMessage.fromJson(Map<String, dynamic> j) =>
-      SquareMessage(
-        type: j['type'] as String,
-        did:  j['did']  as String?,
-        name: j['name'] as String?,
-        body: j['body'] as String? ?? '',
-        time: DateTime.fromMillisecondsSinceEpoch(
-            (j['ts'] as int?) ?? 0),
-      );
+  factory SquareMessage.fromJson(Map<String, dynamic> j) => SquareMessage(
+    type: j['type'] as String,
+    did: j['did'] as String?,
+    name: j['name'] as String?,
+    body: j['body'] as String? ?? '',
+    time: DateTime.fromMillisecondsSinceEpoch((j['ts'] as int?) ?? 0),
+  );
 
   bool get isMe => false; // 由外部传入 myDID 比较
 }
@@ -55,7 +53,7 @@ class SquareRepository {
 
   Future<void> connect(String room) async {
     _currentRoom = room;
-    _msgCtrl  ??= StreamController<List<SquareMessage>>.broadcast();
+    _msgCtrl ??= StreamController<List<SquareMessage>>.broadcast();
     _stateCtrl ??= StreamController<ConnState>.broadcast();
 
     _stateCtrl!.add(ConnState.connecting);
@@ -66,9 +64,7 @@ class SquareRepository {
       return;
     }
 
-    final uri = Uri.parse(
-      '$_baseWsUrl/square/ws?room=$room&token=$jwt',
-    );
+    final uri = Uri.parse('$_baseWsUrl/square/ws?room=$room&token=$jwt');
 
     try {
       _channel = WebSocketChannel.connect(uri);
@@ -78,7 +74,7 @@ class SquareRepository {
 
       _channel!.stream.listen(
         _onMessage,
-        onDone:  _onDisconnected,
+        onDone: _onDisconnected,
         onError: _onError,
         cancelOnError: false,
       );
@@ -121,25 +117,21 @@ class SquareRepository {
 
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(
-      Duration(seconds: _reconnectDelay),
-      () { if (_currentRoom != null) connect(_currentRoom!); },
-    );
+    _reconnectTimer = Timer(Duration(seconds: _reconnectDelay), () {
+      if (_currentRoom != null) connect(_currentRoom!);
+    });
     _reconnectDelay = (_reconnectDelay * 2).clamp(2, 30);
   }
 
   void send(String body) {
     if (_channel == null) return;
-    _channel!.sink.add(jsonEncode({
-      'type': 'message',
-      'body': body,
-    }));
+    _channel!.sink.add(jsonEncode({'type': 'message', 'body': body}));
   }
 
   void disconnect() {
     _reconnectTimer?.cancel();
     _channel?.sink.close();
-    _channel     = null;
+    _channel = null;
     _currentRoom = null;
     _messages.clear();
   }

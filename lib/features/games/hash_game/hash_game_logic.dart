@@ -3,9 +3,24 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 class HashGameLogic {
+  /// 手动输入和滑块共用的上限。6 位十进制，含 999999。
+  static const int maxNonce = 999999;
+  static const int maxNonceLength = 6;
+
+  static final RegExp _noncePattern = RegExp('^[0-9]{1,$maxNonceLength}\$');
+
+  /// 空串视为 0。含非数字、超出位数或大于 [maxNonce] 时返回 null。
+  static int? parseNonce(String raw) {
+    if (raw.isEmpty) return 0;
+    if (!_noncePattern.hasMatch(raw)) return null;
+    final value = int.tryParse(raw);
+    if (value == null || value > maxNonce) return null;
+    return value;
+  }
+
   /// 给定交易数据和 nonce，计算 SHA-256
   static String compute(String txData, int nonce) {
-    final input  = '$txData:$nonce';
+    final input = '$txData:$nonce';
     final digest = sha256.convert(utf8.encode(input));
     return digest.toString();
   }
@@ -29,10 +44,14 @@ class HashGameLogic {
   /// 实际上就是预算好的参考答案区间
   static String hint(int levelIndex) {
     switch (levelIndex) {
-      case 0: return '提示：Nonce 在 0 ~ 100 之间就能找到';
-      case 1: return '提示：Nonce 在 100 ~ 2000 之间';
-      case 2: return '提示：Nonce 在 1000 ~ 50000 之间，耐心找';
-      default: return '';
+      case 0:
+        return '提示：Nonce 在 0 ~ 100 之间就能找到';
+      case 1:
+        return '提示：Nonce 在 100 ~ 2000 之间';
+      case 2:
+        return '提示：Nonce 在 1000 ~ 50000 之间，耐心找';
+      default:
+        return '';
     }
   }
 }

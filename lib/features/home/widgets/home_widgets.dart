@@ -33,8 +33,8 @@ class HomeSectionTitle extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],
@@ -74,18 +74,21 @@ class FraudSummarySection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('安全清单',
-                    style: Theme.of(context).textTheme.labelLarge),
+                Text('安全清单', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 8),
-                ...HomeContent.fraudChecklist.take(4).map(
+                ...HomeContent.fraudChecklist
+                    .take(4)
+                    .map(
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.check_circle_outline,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary),
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(child: Text(item.shortTitle)),
                           ],
@@ -116,10 +119,12 @@ class FraudSummarySection extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(scam.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            scam.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           const SizedBox(height: 8),
                           Expanded(
                             child: Text(
@@ -163,10 +168,7 @@ class _TimelineSectionState extends State<TimelineSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionTitle(
-          title: '加密货币发展年史',
-          subtitle: '关键里程碑（精确到月）',
-        ),
+        const HomeSectionTitle(title: '加密货币发展年史', subtitle: '关键里程碑（精确到月）'),
         ...visible.map((e) => _TimelineTile(event: e)),
         if (events.length > _collapsedCount)
           TextButton(
@@ -202,7 +204,9 @@ class _TimelineTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              Expanded(child: Container(width: 2, color: colorScheme.outlineVariant)),
+              Expanded(
+                child: Container(width: 2, color: colorScheme.outlineVariant),
+              ),
             ],
           ),
           const SizedBox(width: 12),
@@ -214,17 +218,23 @@ class _TimelineTile extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(event.yearMonth,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          )),
+                      Text(
+                        event.yearMonth,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      _TypeChip(label: HomeContent.timelineTypeLabel(event.type)),
+                      _TypeChip(
+                        label: HomeContent.timelineTypeLabel(event.type),
+                      ),
                       if (event.related != null) ...[
                         const SizedBox(width: 8),
-                        Text(event.related!,
-                            style: Theme.of(context).textTheme.labelSmall),
+                        Text(
+                          event.related!,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ],
                     ],
                   ),
@@ -286,28 +296,29 @@ class GlossarySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionTitle(
-          title: '概念速查',
-          subtitle: '术语速览；展开查看定义',
-        ),
+        const HomeSectionTitle(title: '概念速查', subtitle: '术语速览；展开查看定义'),
         Card(
-          color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4),
+          color: Theme.of(
+            context,
+          ).colorScheme.secondaryContainer.withValues(alpha: 0.4),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(HomeContent.shitcoinLifecycleTitle,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        )),
+                Text(
+                  HomeContent.shitcoinLifecycleTitle,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 ...HomeContent.shitcoinLifecycleSteps.asMap().entries.map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Text('${e.key + 1}. ${e.value}'),
-                      ),
-                    ),
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text('${e.key + 1}. ${e.value}'),
+                  ),
+                ),
                 TextButton(
                   onPressed: () => context.push('/learn/fraud?scam=rug_pull'),
                   child: const Text('了解 Rug Pull / 庞氏盘 →'),
@@ -323,8 +334,10 @@ class GlossarySection extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  title: Text(entry.key,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  title: Text(
+                    entry.key,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 ...entry.value.map(
                   (t) => ExpansionTile(
@@ -339,8 +352,10 @@ class GlossarySection extends StatelessWidget {
                             Text(t.definition),
                             if (t.learnChapterHint != null) ...[
                               const SizedBox(height: 8),
-                              Text(t.learnChapterHint!,
-                                  style: Theme.of(context).textTheme.labelSmall),
+                              Text(
+                                t.learnChapterHint!,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
                             ],
                           ],
                         ),
@@ -365,10 +380,7 @@ class FlowOverviewSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionTitle(
-          title: '流程速览',
-          subtitle: '一笔资产如何在链与钱包间流动',
-        ),
+        const HomeSectionTitle(title: '流程速览', subtitle: '一笔资产如何在链与钱包间流动'),
         SizedBox(
           height: 200,
           child: ListView.separated(
@@ -385,16 +397,20 @@ class FlowOverviewSection extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(flow.title,
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          flow.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 12),
                         Expanded(
                           child: ListView.builder(
                             itemCount: flow.steps.length,
                             itemBuilder: (_, j) => Padding(
                               padding: const EdgeInsets.only(bottom: 6),
-                              child: Text('${j + 1}. ${flow.steps[j]}',
-                                  style: const TextStyle(fontSize: 13)),
+                              child: Text(
+                                '${j + 1}. ${flow.steps[j]}',
+                                style: const TextStyle(fontSize: 13),
+                              ),
                             ),
                           ),
                         ),
@@ -427,31 +443,40 @@ class LearnMapSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const HomeSectionTitle(title: '学习地图', subtitle: '按主题进入系统学程'),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: HomeContent.learnMapEntries.map((e) {
-            return SizedBox(
-              width: (MediaQuery.sizeOf(context).width - 48) / 2,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(e.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text(e.description,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                    ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final tileWidth = (constraints.maxWidth - 8) / 2;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: HomeContent.learnMapEntries.map((e) {
+                return SizedBox(
+                  width: tileWidth,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.title,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            e.description,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         ),
       ],
     );
@@ -465,9 +490,9 @@ class ExternalLinksSection extends StatelessWidget {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('无法打开链接：$url')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('无法打开链接：$url')));
       }
     }
   }
@@ -477,10 +502,7 @@ class ExternalLinksSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionTitle(
-          title: '权威延伸阅读',
-          subtitle: '将在系统浏览器中打开',
-        ),
+        const HomeSectionTitle(title: '权威延伸阅读', subtitle: '将在系统浏览器中打开'),
         ...HomeContent.externalResources.map(
           (r) => Card(
             margin: const EdgeInsets.only(bottom: 8),

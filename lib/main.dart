@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/did/did_auth.dart';
+import 'core/layout/window_layout_host.dart';
+import 'core/progress/progress_store.dart';
 import 'core/providers/app_settings_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/secure_storage.dart';
@@ -16,19 +18,20 @@ Future<void> main() async {
 
   final hasIdentity = await SecureStorage.hasIdentity();
   if (hasIdentity) {
+    var sessionReady = false;
     try {
       await DIDAuth.ensureSession();
+      sessionReady = true;
     } catch (_) {
       // 密钥异常时仍进入应用，受保护接口会提示重新认证
     }
+    if (sessionReady) await ProgressStore.pull();
   }
   final initialLocation = hasIdentity ? '/learn' : '/register';
 
   runApp(
     ProviderScope(
-      overrides: [
-        initialLocationProvider.overrideWithValue(initialLocation),
-      ],
+      overrides: [initialLocationProvider.overrideWithValue(initialLocation)],
       child: const DigiPlayersApp(),
     ),
   );
@@ -38,22 +41,22 @@ class DigiPlayersApp extends ConsumerWidget {
   const DigiPlayersApp({super.key});
 
   static ThemeData lightTheme() => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seedColor,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        useMaterial3: true,
-      );
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: Brightness.light,
+    ),
+    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    useMaterial3: true,
+  );
 
   static ThemeData darkTheme() => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seedColor,
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0F1117),
-        useMaterial3: true,
-      );
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: Brightness.dark,
+    ),
+    scaffoldBackgroundColor: const Color(0xFF0F1117),
+    useMaterial3: true,
+  );
 
   static ThemeData _resolveTheme(BuildContext context, AppSettings settings) {
     final brightness = switch (settings.themeMode) {
@@ -71,7 +74,9 @@ class DigiPlayersApp extends ConsumerWidget {
 
     return MaterialApp.router(
       // 主题/语言变化时强制重建，避免 go_router 子树不刷新配色
-      key: ValueKey('${settings.themeMode.name}_${settings.locale.toLanguageTag()}'),
+      key: ValueKey(
+        '${settings.themeMode.name}_${settings.locale.toLanguageTag()}',
+      ),
       title: 'DigiPlayers',
       debugShowCheckedModeBanner: false,
       locale: settings.locale,
@@ -90,9 +95,11 @@ class DigiPlayersApp extends ConsumerWidget {
       darkTheme: darkTheme(),
       routerConfig: router,
       builder: (context, child) {
-        return Theme(
-          data: _resolveTheme(context, settings),
-          child: child ?? const SizedBox.shrink(),
+        return WindowLayoutHost(
+          child: Theme(
+            data: _resolveTheme(context, settings),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );

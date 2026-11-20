@@ -17,20 +17,20 @@ class SquareChatScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SquareChatScreen> createState() =>
-      _SquareChatScreenState();
+  ConsumerState<SquareChatScreen> createState() => _SquareChatScreenState();
 }
 
-class _SquareChatScreenState
-    extends ConsumerState<SquareChatScreen> {
-  final _inputCtrl   = TextEditingController();
-  final _scrollCtrl  = ScrollController();
-  bool _sending      = false;
-  String _myName     = fallbackDisplayName;
+class _SquareChatScreenState extends ConsumerState<SquareChatScreen> {
+  final _inputCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
+  bool _sending = false;
+  String _myName = fallbackDisplayName;
+  SquareRepository? _repo;
 
   @override
   void initState() {
     super.initState();
+    _repo = ref.read(squareRepoProvider);
     _loadName();
   }
 
@@ -48,8 +48,8 @@ class _SquareChatScreenState
   void dispose() {
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
-    // 离开时断开连接
-    ref.read(squareRepoProvider).disconnect();
+    // 离开时断开连接。仓库在 initState 里取出，避免页面销毁后再读 ref。
+    _repo?.disconnect();
     super.dispose();
   }
 
@@ -74,10 +74,8 @@ class _SquareChatScreenState
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync = ref.watch(
-        squareMessagesProvider(widget.room));
-    final connAsync = ref.watch(
-        squareConnStateProvider(widget.room));
+    final messagesAsync = ref.watch(squareMessagesProvider(widget.room));
+    final connAsync = ref.watch(squareConnStateProvider(widget.room));
     final myDIDAsync = ref.watch(myDIDProvider);
     final myDID = myDIDAsync.value;
 
@@ -95,10 +93,8 @@ class _SquareChatScreenState
             padding: const EdgeInsets.only(right: 16),
             child: connAsync.when(
               data: (state) => _ConnIndicator(state: state),
-              loading: () => const _ConnIndicator(
-                  state: ConnState.connecting),
-              error: (_, __) => const _ConnIndicator(
-                  state: ConnState.error),
+              loading: () => const _ConnIndicator(state: ConnState.connecting),
+              error: (_, __) => const _ConnIndicator(state: ConnState.error),
             ),
           ),
         ],
@@ -108,27 +104,32 @@ class _SquareChatScreenState
           // ── 消息列表 ──────────────────────────────
           Expanded(
             child: messagesAsync.when(
-              loading: () => const Center(
-                  child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                  child: Text('连接失败：$e')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('连接失败：$e')),
               data: (messages) {
                 if (messages.isEmpty) {
                   return const Center(
-                    child: Text('暂无消息，来说第一句话吧',
-                        style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      '暂无消息，来说第一句话吧',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   );
                 }
                 return ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   itemCount: messages.length,
                   itemBuilder: (_, i) {
                     final msg = messages[i];
                     final isMe = msg.did == myDID;
                     return _MessageBubble(
-                        msg: msg, isMe: isMe, myName: _myName);
+                      msg: msg,
+                      isMe: isMe,
+                      myName: _myName,
+                    );
                   },
                 );
               },
@@ -138,8 +139,7 @@ class _SquareChatScreenState
           // ── 输入栏 ────────────────────────────────
           SafeArea(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
@@ -150,35 +150,40 @@ class _SquareChatScreenState
                   ),
                 ],
               ),
-              child: Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: _inputCtrl,
-                    maxLength:  500,
-                    maxLines:   null,
-                    decoration: InputDecoration(
-                      hintText:    '说点什么…',
-                      counterText: '',
-                      filled:      true,
-                      fillColor:   Theme.of(context)
-                          .colorScheme.surfaceContainerHighest,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _inputCtrl,
+                      maxLength: 500,
+                      maxLines: null,
+                      decoration: InputDecoration(
+                        hintText: '说点什么…',
+                        counterText: '',
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      onSubmitted: (_) => _sendMessage(),
+                      textInputAction: TextInputAction.send,
                     ),
-                    onSubmitted: (_) => _sendMessage(),
-                    textInputAction: TextInputAction.send,
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send_rounded),
-                ),
-              ]),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send_rounded),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -207,9 +212,10 @@ class _MessageBubble extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Center(
-          child: Text(msg.body,
-              style: const TextStyle(
-                  color: Colors.grey, fontSize: 12)),
+          child: Text(
+            msg.body,
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ),
       );
     }
@@ -217,8 +223,9 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
@@ -233,27 +240,25 @@ class _MessageBubble extends StatelessWidget {
               children: [
                 if (!isMe)
                   Padding(
-                    padding: const EdgeInsets.only(
-                        left: 4, bottom: 2),
+                    padding: const EdgeInsets.only(left: 4, bottom: 2),
                     child: Text(
                       msg.name ?? _shortDID(msg.did ?? ''),
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isMe
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.only(
-                      topLeft:     const Radius.circular(16),
-                      topRight:    const Radius.circular(16),
-                      bottomLeft:  Radius.circular(isMe ? 16 : 4),
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isMe ? 16 : 4),
                       bottomRight: Radius.circular(isMe ? 4 : 16),
                     ),
                   ),
@@ -267,12 +272,10 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(
-                      top: 2, left: 4, right: 4),
+                  padding: const EdgeInsets.only(top: 2, left: 4, right: 4),
                   child: Text(
                     _formatTime(msg.time),
-                    style: const TextStyle(
-                        fontSize: 10, color: Colors.grey),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 ),
               ],
@@ -313,9 +316,10 @@ class _Avatar extends StatelessWidget {
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',
         style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold),
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -329,20 +333,22 @@ class _ConnIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = switch (state) {
-      ConnState.connected    => (Colors.green,  '已连接'),
-      ConnState.connecting   => (Colors.orange, '连接中'),
-      ConnState.disconnected => (Colors.grey,   '已断开'),
-      ConnState.error        => (Colors.red,    '重连中'),
+      ConnState.connected => (Colors.green, '已连接'),
+      ConnState.connecting => (Colors.orange, '连接中'),
+      ConnState.disconnected => (Colors.grey, '已断开'),
+      ConnState.error => (Colors.red, '重连中'),
     };
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 8, height: 8,
-        decoration: BoxDecoration(
-            color: color, shape: BoxShape.circle),
-      ),
-      const SizedBox(width: 4),
-      Text(label,
-          style: TextStyle(fontSize: 12, color: color)),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 12, color: color)),
+      ],
+    );
   }
 }

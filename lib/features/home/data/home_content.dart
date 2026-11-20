@@ -160,7 +160,9 @@ abstract final class HomeContent {
     FraudChecklistItem(
       id: 'investment',
       shortTitle: '拒绝保本高收益与带单话术',
-      detail: '「稳赚不赔」「内部消息」「拉群带单」均为高危信号，与正规技术学习无关。',
+      detail:
+          '「稳赚」「内幕」「保本」既是赌博话术，也是诈骗话术。'
+          '「稳赚不赔」「内部消息」「拉群带单」都与正规技术学习无关。',
     ),
     FraudChecklistItem(
       id: 'transfer',
@@ -229,6 +231,7 @@ abstract final class HomeContent {
   ];
 
   static const fraudRecognitionSignals = [
+    '「稳赚」「内幕」「保本」既是赌博话术，也是诈骗话术',
     '承诺保本、固定收益或「稳赚不赔」',
     '只进不出：充值容易、提现层层设障',
     '必须拉人头、发展下线才能获得收益',
@@ -323,12 +326,18 @@ abstract final class HomeContent {
   ];
 
   // ── 概念速查 ─────────────────────────────────────
+  static const rhetoricPhrases = ['稳赚', '内幕', '保本'];
+
+  static const rhetoricLabels = ['赌博话术', '诈骗话术'];
+
+  static const anotherBetLine = '再来一笔改变不了已经发生的亏损';
+
   static const shitcoinLifecycleTitle = '山寨币的典型生命周期';
 
   static const shitcoinLifecycleSteps = [
     '诞生：分叉、改参数、换皮白皮书，靠叙事与上所预期吸引关注',
     '传播：社交媒体、KOL、社群拉群，流动性往往较浅',
-    '高峰：情绪与交易量短期见顶，常与大盘行情同步',
+    '高峰：偶尔的上涨是间歇性奖励，把人留在追涨里；情绪与交易量仍会短期见顶，常与大盘行情同步',
     '衰退：叙事耗尽、团队离场或流动性被撤走',
     '结局：链上可能仍存在，但难以变现 — 需警惕 Rug Pull 与庞氏盘',
   ];

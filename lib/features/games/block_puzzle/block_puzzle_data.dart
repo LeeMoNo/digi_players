@@ -2,9 +2,9 @@
 
 class PuzzleBlock {
   final String id;
-  final String prevHash;      // 本块声称的前块哈希
-  final String ownHash;       // 本块的哈希（作为下一块的 prevHash）
-  final String txData;        // 当前显示的交易数据（可能被篡改）
+  final String prevHash; // 本块声称的前块哈希
+  final String ownHash; // 本块的哈希（作为下一块的 prevHash）
+  final String txData; // 当前显示的交易数据（可能被篡改）
   final String correctTxData; // 正确的交易数据
   final int nonce;
   final bool isTampered;
@@ -24,12 +24,25 @@ class PuzzleBlock {
 
 // ── 正确的链（顺序 0→1→2→3→4）────────────────────────
 
-const _genesisHash = '0000000000000000';
+const genesisHash = '0000000000000000';
+
+/// 这一块的「前块」是否接上前一张（第一张要接创世块）。
+bool linksToPrevious(List<PuzzleBlock> blocks, int index) {
+  if (index <= 0) {
+    return blocks.isNotEmpty && blocks.first.prevHash == genesisHash;
+  }
+  return blocks[index].prevHash == blocks[index - 1].ownHash;
+}
+
+String prevHashLabel(String hash) {
+  if (hash == genesisHash) return '0000…0000（创世块）';
+  return '${hash.substring(0, 8)}…';
+}
 
 final correctChain = [
   PuzzleBlock(
     id: 'blk_0',
-    prevHash: _genesisHash,
+    prevHash: genesisHash,
     ownHash: 'a3f8c2d1e4b59067',
     txData: 'Alice → Bob : 1.0 BTC',
     correctTxData: 'Alice → Bob : 1.0 BTC',
@@ -39,7 +52,7 @@ final correctChain = [
     id: 'blk_1',
     prevHash: 'a3f8c2d1e4b59067',
     ownHash: '9b2e7f4a1c836d50',
-    txData: 'Charlie → Dave : 0.5 ETH',   // ← 被篡改（原是 0.5 BTC）
+    txData: 'Charlie → Dave : 0.5 ETH', // ← 被篡改（原是 0.5 BTC）
     correctTxData: 'Charlie → Dave : 0.5 BTC',
     nonce: 91047,
     isTampered: true,
@@ -56,7 +69,7 @@ final correctChain = [
     id: 'blk_3',
     prevHash: 'f1d4a8e2c7b30956',
     ownHash: '4c9e1b7d2a658f30',
-    txData: 'Grace → Henry : 100 USDT',   // ← 被篡改（原是 10 USDT）
+    txData: 'Grace → Henry : 100 USDT', // ← 被篡改（原是 10 USDT）
     correctTxData: 'Grace → Henry : 10 USDT',
     nonce: 67392,
     isTampered: true,
@@ -80,7 +93,7 @@ List<PuzzleBlock> buildScrambledBlocks() {
 
 // 验证当前排列是否正确
 bool validateChainOrder(List<PuzzleBlock> blocks) {
-  if (blocks[0].prevHash != _genesisHash) return false;
+  if (blocks[0].prevHash != genesisHash) return false;
   for (int i = 1; i < blocks.length; i++) {
     if (blocks[i].prevHash != blocks[i - 1].ownHash) return false;
   }

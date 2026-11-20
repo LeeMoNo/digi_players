@@ -18,14 +18,16 @@ final myDIDProvider = FutureProvider<String?>((ref) async {
 // 消息流
 final squareMessagesProvider =
     StreamProvider.family<List<SquareMessage>, String>((ref, room) {
-  final repo = ref.watch(squareRepoProvider);
-  repo.connect(room);
-  return repo.messageStream ?? const Stream.empty();
-});
+      final repo = ref.watch(squareRepoProvider);
+      repo.connect(room);
+      return repo.messageStream ?? const Stream.empty();
+    });
 
 // 连接状态流
-final squareConnStateProvider =
-    StreamProvider.family<ConnState, String>((ref, room) {
+final squareConnStateProvider = StreamProvider.family<ConnState, String>((
+  ref,
+  room,
+) {
   final repo = ref.watch(squareRepoProvider);
   return repo.stateStream ?? const Stream.empty();
 });

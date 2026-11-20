@@ -1,6 +1,6 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/progress/progress_store.dart';
 
-/// 学习路径的本地进度。键与章节、练习里已经写入的 Hive 标记一致。
+/// 学习路径的完成情况。标记存在服务端，本机只保留当前 DID 的缓存。
 class LearnPathProgress {
   final bool chapter1;
   final bool block;
@@ -61,26 +61,14 @@ const _steps = [
     button: '去做练习',
     route: '/game/block-puzzle',
   ),
-  LearnPathStep(
-    title: '练习 · 哈希碰碰乐',
-    button: '去做练习',
-    route: '/games/hash',
-  ),
-  LearnPathStep(
-    title: '练习 · 节点怎么传消息',
-    button: '去做练习',
-    route: '/game/p2p',
-  ),
+  LearnPathStep(title: '练习 · 哈希碰碰乐', button: '去做练习', route: '/games/hash'),
+  LearnPathStep(title: '练习 · 节点怎么传消息', button: '去做练习', route: '/game/p2p'),
   LearnPathStep(
     title: '第二节 · 密码学入门',
     button: '继续阅读',
     route: '/learn/chapter/ch_002',
   ),
-  LearnPathStep(
-    title: '练习 · 反诈识别',
-    button: '去做练习',
-    route: '/games/antiscam',
-  ),
+  LearnPathStep(title: '练习 · 反诈识别', button: '去做练习', route: '/games/antiscam'),
 ];
 
 const _readingEraIds = [
@@ -162,17 +150,9 @@ LearnPathStep practiceClearDestination({
           route: '/learn/chapter/ch_002',
         );
       }
-      return const LearnPathStep(
-        title: '继续',
-        button: '继续',
-        route: '/learn',
-      );
+      return const LearnPathStep(title: '继续', button: '继续', route: '/learn');
     default:
-      return const LearnPathStep(
-        title: '继续',
-        button: '继续',
-        route: '/learn',
-      );
+      return const LearnPathStep(title: '继续', button: '继续', route: '/learn');
   }
 }
 
@@ -196,16 +176,12 @@ LearnPathStep quizPassDestination({
       route: '/games/antiscam',
     );
   }
-  return const LearnPathStep(
-    title: '继续',
-    button: '继续',
-    route: '/learn',
-  );
+  return const LearnPathStep(title: '继续', button: '继续', route: '/learn');
 }
 
 Future<LearnPathProgress> readLearnPathProgress() async {
-  final box = await Hive.openBox('learn_progress');
-  bool flag(String key) => box.get(key, defaultValue: false) == true;
+  final flags = await ProgressStore.readFlags();
+  bool flag(String key) => flags[key] == true;
   return LearnPathProgress(
     chapter1: flag('completed_ch_001'),
     block: flag('game_done_game_block'),

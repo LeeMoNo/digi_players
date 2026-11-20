@@ -1,6 +1,9 @@
 // lib/features/auth/mnemonic_screen.dart
 
 import 'package:digi_players/core/did/did_auth.dart';
+import 'package:digi_players/core/layout/reading_width.dart';
+import 'package:digi_players/core/layout/window_layout.dart';
+import 'package:digi_players/core/progress/progress_store.dart';
 import 'package:digi_players/core/storage/secure_storage.dart';
 import 'package:digi_players/features/auth/intro_screen.dart';
 import 'package:dio/dio.dart';
@@ -65,13 +68,15 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
 
     try {
       final result = await DIDAuth.authenticate();
+      await ProgressStore.pull();
       final route = await routeAfterAuth(result.isNewUser);
       if (mounted) context.go(route);
     } on DioException catch (e) {
       if (mounted) {
         final data = e.response?.data;
         String? raw = switch (data) {
-          Map<String, dynamic>() => (data['error'] ?? data['message'])?.toString(),
+          Map<String, dynamic>() =>
+            (data['error'] ?? data['message'])?.toString(),
           String() => data,
           _ => null,
         };
@@ -98,102 +103,107 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('备份助记词')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 警告说明
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '请将以下 12 个单词按顺序抄写到纸上，并保存在安全的地方。'
-                '这是恢复你账号的唯一方式，丢失后无法找回。',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onErrorContainer,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 12 个助记词网格
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 2.5,
-              ),
-              itemCount: 12,
-              itemBuilder: (context, i) => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
+      body: SafeArea(
+        child: ReadingWidth(
+          maxWidth: WindowLayout.formMaxWidth,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 警告说明
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  child: Text(
+                    '请将以下 12 个单词按顺序抄写到纸上，并保存在安全的地方。'
+                    '这是恢复你账号的唯一方式，丢失后无法找回。',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${i + 1}. ${widget.mnemonic[i]}',
-                  style: const TextStyle(fontFamily: 'monospace'),
+                const SizedBox(height: 24),
+
+                // 12 个助记词网格
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 2.5,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, i) => Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${i + 1}. ${widget.mnemonic[i]}',
+                      style: const TextStyle(fontFamily: 'monospace'),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-            // 一键复制（方便测试，生产环境可考虑移除）
-            TextButton.icon(
-              onPressed: () {
-                Clipboard.setData(
-                  ClipboardData(text: widget.mnemonic.join(' ')),
-                );
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
-              },
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('复制助记词'),
-            ),
-            const SizedBox(height: 24),
-
-            // 验证区
-            Text(
-              '验证：请填写以下位置的单词',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 12),
-
-            for (final i in _quizIndices) ...[
-              TextField(
-                controller: _controllers[i],
-                decoration: InputDecoration(
-                  labelText: '第 ${i + 1} 个单词',
-                  border: const OutlineInputBorder(),
+                // 一键复制（方便测试，生产环境可考虑移除）
+                TextButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: widget.mnemonic.join(' ')),
+                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('复制助记词'),
                 ),
-                autocorrect: false,
-                enableSuggestions: false,
-              ),
-              const SizedBox(height: 12),
-            ],
+                const SizedBox(height: 24),
 
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: (_isAuthenticating) ? null : _onConfirm,
-              child: _isAuthenticating
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('我已抄写完毕，进入应用'),
+                // 验证区
+                Text(
+                  '验证：请填写以下位置的单词',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 12),
+
+                for (final i in _quizIndices) ...[
+                  TextField(
+                    controller: _controllers[i],
+                    decoration: InputDecoration(
+                      labelText: '第 ${i + 1} 个单词',
+                      border: const OutlineInputBorder(),
+                    ),
+                    autocorrect: false,
+                    enableSuggestions: false,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                const SizedBox(height: 8),
+                FilledButton(
+                  onPressed: (_isAuthenticating) ? null : _onConfirm,
+                  child: _isAuthenticating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('我已抄写完毕，进入应用'),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
