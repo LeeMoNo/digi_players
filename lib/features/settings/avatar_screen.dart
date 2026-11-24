@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/avatar_image.dart';
 import '../../core/avatar_url.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
@@ -101,6 +102,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
   void initState() {
     super.initState();
     _url = ProfileCache.latest?.avatarUrl;
+    _bytes = ProfileCache.latest?.avatarBytes;
     _load();
   }
 
@@ -113,8 +115,16 @@ class _AvatarScreenState extends State<AvatarScreen> {
     try {
       final url = await (widget.loadAvatarUrl ?? _loadAvatarUrl)();
       if (!mounted || epoch != _epoch) return;
-      setState(() => _url = url);
-      ProfileCache.rememberAvatar(url);
+      Uint8List? downloaded;
+      if (widget.loadAvatarUrl == null && url != null) {
+        downloaded = await fetchAvatarBytes(url);
+        if (!mounted || epoch != _epoch) return;
+      }
+      setState(() {
+        _url = url;
+        if (downloaded != null) _bytes = downloaded;
+      });
+      ProfileCache.rememberAvatar(url, bytes: downloaded);
     } catch (_) {}
   }
 
@@ -186,7 +196,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   String _friendlyError(DioException e) {
     if (e.response?.statusCode == 401) {
-      return '登录已过期，请完全退出应用后重新打开，或重新完成身份验证';
+      return '登录状态没能刷新，请检查网络后再试';
     }
     if (e.response?.statusCode == 429) return '换得太频繁，请一小时后再试';
     final data = e.response?.data;

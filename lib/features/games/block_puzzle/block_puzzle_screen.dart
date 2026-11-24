@@ -78,9 +78,30 @@ class _State extends State<BlockPuzzleScreen> {
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _seconds++);
     });
+  }
+
+  void _playAgain() {
+    _timer?.cancel();
+    setState(() {
+      _blocks = List<PuzzleBlock>.from(
+        widget.initialBlocks ?? buildScrambledBlocks(),
+      );
+      _markedTampered.clear();
+      _gameDone = false;
+      _submitted = false;
+      _orderCorrect = false;
+      _tamperedCorrect = false;
+      _saveFailed = false;
+      _next = null;
+      _earned = const [];
+      _seconds = 0;
+    });
+    if (widget.fetchSeed) _fetchSeed();
+    if (widget.trackTime) _startTimer();
   }
 
   void _toggleMark(String id) {
@@ -340,7 +361,7 @@ class _State extends State<BlockPuzzleScreen> {
                 if (!passed) ...[
                   const SizedBox(height: 12),
                   OutlinedButton(
-                    onPressed: () => context.replace('/game/block-puzzle'),
+                    onPressed: _playAgain,
                     child: const Text('再来一次'),
                   ),
                 ],

@@ -1,7 +1,9 @@
 // lib/features/profile/profile_repository.dart
-import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/avatar_image.dart';
 import '../../core/avatar_url.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/models/badge.dart';
@@ -101,7 +103,17 @@ class ProfileRepository {
         avatarBytes = nextUrl == avatarUrl ? avatarBytes : null;
         avatarUrl = nextUrl;
       }
-    } catch (_) {}
+    } catch (e) {
+      final status = e is DioException ? e.response?.statusCode : null;
+      debugPrint('[档案] 拉取失败 status=$status $e');
+    }
+
+    if (avatarUrl != null && avatarBytes == null) {
+      avatarBytes = await fetchAvatarBytes(avatarUrl);
+    }
+    debugPrint(
+      '[档案] 昵称=${nickname ?? '空'} 头像=${avatarUrl == null ? '无' : '有'} 图片字节=${avatarBytes?.length ?? 0}',
+    );
 
     final points = await fetchTotalPoints();
     final rankings = await fetchLeaderboard();

@@ -1,13 +1,19 @@
 // lib/features/square/square_screen.dart
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
+import '../../core/avatar_image.dart';
+import '../../core/avatar_url.dart';
 import '../../core/display_name.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
-import '../../core/layout/window_layout_host.dart';
 import '../../core/storage/secure_storage.dart';
+import '../points/profile_repository.dart';
+import '../points/user_avatar.dart';
+import 'square_split.dart';
 
 class SquareScreen extends StatefulWidget {
   const SquareScreen({super.key, this.selectedRoomId});
@@ -21,24 +27,67 @@ class SquareScreen extends StatefulWidget {
 class _State extends State<SquareScreen> {
   String? _did;
   String _name = fallbackDisplayName;
+  String? _avatarUrl;
+  Uint8List? _avatarBytes;
 
   @override
   void initState() {
     super.initState();
+    ProfileCache.addListener(_onProfileCache);
+    _readCache(ProfileCache.latest);
     _load();
+  }
+
+  @override
+  void dispose() {
+    ProfileCache.removeListener(_onProfileCache);
+    super.dispose();
+  }
+
+  void _onProfileCache() {
+    final cached = ProfileCache.latest;
+    if (!mounted || cached == null) return;
+    setState(() => _readCache(cached));
+  }
+
+  void _readCache(ProfileSnapshot? cached) {
+    if (cached == null) return;
+    _did ??= cached.did;
+    _name = displayNameOrFallback(cached.nickname);
+    _avatarUrl = cached.avatarUrl;
+    _avatarBytes = cached.avatarBytes;
   }
 
   Future<void> _load() async {
     final did = await SecureStorage.getDID();
     var name = fallbackDisplayName;
+    String? avatarUrl;
+    Uint8List? avatarBytes;
+    final cached = ProfileCache.latest;
+    if (cached != null && cached.did == did) {
+      name = displayNameOrFallback(cached.nickname);
+      avatarUrl = cached.avatarUrl;
+      avatarBytes = cached.avatarBytes;
+    }
     try {
       final res = await ApiClient.dio.get('/user/profile');
-      name = displayNameOrFallback(res.data['display_name'] as String?);
+      final data = res.data;
+      if (data is Map) {
+        name = displayNameOrFallback(data['display_name'] as String?);
+        final nextUrl = absoluteAvatarUrl(data['avatar_url'] as String?);
+        if (nextUrl != avatarUrl) avatarBytes = null;
+        avatarUrl = nextUrl;
+      }
     } catch (_) {}
+    if (avatarUrl != null && avatarBytes == null) {
+      avatarBytes = await fetchAvatarBytes(avatarUrl);
+    }
     if (!mounted) return;
     setState(() {
       _did = did;
       _name = name;
+      _avatarUrl = avatarUrl;
+      _avatarBytes = avatarBytes;
     });
   }
 
@@ -50,7 +99,7 @@ class _State extends State<SquareScreen> {
   void _openRoom(BuildContext context, _RoomConfig room) {
     if (room.id == widget.selectedRoomId) return;
     final location = '/square/chat/${room.id}';
-    if (!WindowLayoutScope.layoutOf(context).canSplit) {
+    if (!SquareSplitScope.splittingOf(context)) {
       context.push(location, extra: room.name);
       return;
     }
@@ -99,24 +148,32 @@ class _State extends State<SquareScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.fingerprint, size: 32),
+                    UserAvatar(
+                      size: 40,
+                      url: _avatarUrl,
+                      bytes: _avatarBytes,
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => context.push('/settings/avatar'),
+                    ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          _shortDID(_did!),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: Colors.grey,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      ],
+                          Text(
+                            _shortDID(_did!),
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

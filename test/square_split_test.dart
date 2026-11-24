@@ -56,6 +56,7 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await _flush(tester);
 
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.widgetWithText(AppBar, '区块链技术'), findsOneWidget);
     expect(_tile(tester, '区块链技术').selected, isTrue);
     expect(find.text('密码学讨论'), findsOneWidget);

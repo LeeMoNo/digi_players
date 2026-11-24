@@ -79,7 +79,7 @@ class _State extends State<NicknameScreen> {
 
   String _friendlyError(DioException e) {
     if (e.response?.statusCode == 401) {
-      return '登录已过期，请完全退出应用后重新打开，或重新完成身份验证';
+      return '登录状态没能刷新，请检查网络后再试';
     }
     final data = e.response?.data;
     if (data is Map && data['error'] != null) return data['error'].toString();

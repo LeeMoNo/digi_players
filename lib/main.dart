@@ -17,15 +17,16 @@ Future<void> main() async {
   await Hive.initFlutter();
 
   final hasIdentity = await SecureStorage.hasIdentity();
-  if (hasIdentity) {
-    var sessionReady = false;
-    try {
-      await DIDAuth.ensureSession();
-      sessionReady = true;
-    } catch (_) {
-      // 密钥异常时仍进入应用，受保护接口会提示重新认证
+  if (!hasIdentity) {
+    debugPrint('[身份] 本机没有钥匙，进入注册');
+  } else {
+    // runApp 前不能弹二次验证，过期令牌只清掉，真正签名等界面起来。
+    final jwt = await DIDAuth.ensureSession(interactive: false);
+    if (jwt != null) {
+      await ProgressStore.pull();
+    } else {
+      debugPrint('[身份] 启动时没有可用令牌，进度等进应用后再拉');
     }
-    if (sessionReady) await ProgressStore.pull();
   }
   final initialLocation = hasIdentity ? '/learn' : '/register';
 

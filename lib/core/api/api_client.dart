@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../did/did_auth.dart';
@@ -56,13 +57,8 @@ class _UnauthorizedRetryInterceptor extends Interceptor {
     }
 
     try {
-      await DIDAuth.ensureSession();
-      final jwt = await SecureStorage.getJWT();
-      if (jwt == null || jwt.isEmpty) {
-        handler.next(err);
-        return;
-      }
-
+      debugPrint('[身份] ${err.requestOptions.path} 返回 401，重新签名后再试一次');
+      final jwt = await DIDAuth.refreshSession();
       final opts = err.requestOptions;
       opts.extra[_retryKey] = true;
       opts.headers['Authorization'] = 'Bearer $jwt';
@@ -70,8 +66,10 @@ class _UnauthorizedRetryInterceptor extends Interceptor {
       if (data is FormData) opts.data = data.clone();
 
       final response = await ApiClient.dio.fetch(opts);
+      debugPrint('[身份] 重试成功 ${opts.path}');
       handler.resolve(response);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[身份] 重新签名或重试失败：$e');
       handler.next(err);
     }
   }

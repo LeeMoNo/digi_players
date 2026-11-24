@@ -48,12 +48,25 @@ void main() {
     expect(showsMainNavigation('/learn'), isTrue);
     expect(showsMainNavigation('/games'), isTrue);
     expect(showsMainNavigation('/profile'), isTrue);
+    expect(showsMainNavigation('/profile/points'), isFalse);
     expect(showsMainNavigation('/settings'), isFalse);
     expect(showsMainNavigation('/settings/language'), isFalse);
     expect(showsMainNavigation('/square'), isFalse);
     expect(showsMainNavigation('/learn/chapter/ch_001'), isFalse);
     expect(showsMainNavigation('/games/hash'), isFalse);
     expect(showsMainNavigation('/game/block-puzzle'), isFalse);
+  });
+
+  test('资料、广场、设置宽屏都藏侧栏，只留两栏', () {
+    expect(hidesMainRail('/settings'), isTrue);
+    expect(hidesMainRail('/settings/nickname'), isTrue);
+    expect(hidesMainRail('/learn/library'), isTrue);
+    expect(hidesMainRail('/learn/library/ledger'), isTrue);
+    expect(hidesMainRail('/square'), isTrue);
+    expect(hidesMainRail('/square/chat/blockchain'), isTrue);
+    expect(hidesMainRail('/learn'), isFalse);
+    expect(hidesMainRail('/games'), isFalse);
+    expect(hidesMainRail('/profile'), isFalse);
   });
 
   testWidgets('外屏横屏宽 678 仍是底栏', (tester) async {

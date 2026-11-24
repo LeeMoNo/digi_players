@@ -141,4 +141,36 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Eve → Frank : 2.0 BTC')).dy),
     );
   });
+
+  testWidgets('结算页再来一次会回到新的一局', (tester) async {
+    tester.view.physicalSize = const Size(400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlockPuzzleScreen(
+          fetchSeed: false,
+          trackTime: false,
+          initialBlocks: correctChain,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('标记为篡改').first);
+    await tester.pump();
+    await tester.tap(find.text('提交答案'));
+    await tester.pump();
+
+    expect(find.text('还需再试'), findsOneWidget);
+    expect(find.text('再来一次'), findsOneWidget);
+
+    await tester.tap(find.text('再来一次'));
+    await tester.pump();
+
+    expect(find.text('还需再试'), findsNothing);
+    expect(find.text('提交答案'), findsOneWidget);
+    expect(find.text('已标记 0/2 个篡改区块'), findsOneWidget);
+  });
 }

@@ -164,11 +164,9 @@ void main() {
     await tester.pumpAndSettle();
 
     final scroll = tester.getSize(find.byKey(const Key('library-scroll')));
-    expect(
-      scroll.width,
-      closeTo(WindowLayout.evenPaneWidth(820 - WindowLayout.railWidth), 1),
-    );
+    expect(scroll.width, closeTo(WindowLayout.evenPaneWidth(820), 1));
     expect(find.byType(VerticalDivider), findsNothing);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
   });
 
   testWidgets('竖缝把资料分界移到折痕', (tester) async {

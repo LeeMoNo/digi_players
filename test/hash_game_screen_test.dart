@@ -1,5 +1,6 @@
 import 'package:digi_players/core/api/api_client.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_logic.dart';
+import 'package:digi_players/features/games/hash_game/hash_game_progress.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +27,17 @@ class _OfflineAdapter implements HttpClientAdapter {
 
 void main() {
   late HttpClientAdapter originalAdapter;
+  HashGameCheckpoint stored = HashGameCheckpoint.start;
 
   setUp(() {
+    stored = HashGameCheckpoint.start;
+    HashGameProgress.debugLoadOverride = () async => stored;
+    HashGameProgress.debugSaveOverride = (checkpoint) async {
+      stored = checkpoint;
+    };
+    HashGameProgress.debugClearOverride = () async {
+      stored = HashGameCheckpoint.start;
+    };
     originalAdapter = ApiClient.dio.httpClientAdapter;
     ApiClient.dio.httpClientAdapter = _OfflineAdapter();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -39,6 +49,9 @@ void main() {
 
   tearDown(() {
     ApiClient.dio.httpClientAdapter = originalAdapter;
+    HashGameProgress.debugLoadOverride = null;
+    HashGameProgress.debugSaveOverride = null;
+    HashGameProgress.debugClearOverride = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
@@ -132,6 +145,25 @@ void main() {
     expect(_nonceText(tester), isEmpty);
     expect(find.text('Nonce：0'), findsOneWidget);
   });
+
+  testWidgets('已通过第一关后再次进入，直接显示第二关', (tester) async {
+    stored = const HashGameCheckpoint(level: 1, solvedNonces: [7]);
+
+    await _showGame(tester, const Size(360, 800));
+    await _waitForLevel(tester, 2);
+
+    expect(find.textContaining('关卡 2/3'), findsOneWidget);
+    expect(find.textContaining('关卡 1/3'), findsNothing);
+  });
+}
+
+Future<void> _waitForLevel(WidgetTester tester, int level) async {
+  final label = '关卡 $level/3';
+  for (var i = 0; i < 40; i++) {
+    if (find.textContaining(label).evaluate().isNotEmpty) return;
+    await tester.pump(const Duration(milliseconds: 20));
+  }
+  fail('等待 $label 超时');
 }
 
 String _nonceText(WidgetTester tester) {

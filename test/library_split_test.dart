@@ -63,16 +63,14 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.text('共有的账本'), findsOneWidget);
     expect(find.text(_ledger), findsOneWidget);
     expect(_tile(tester, _ledger).selected, isTrue);
     final listWidth = tester
         .getSize(find.byKey(const Key('library-scroll')))
         .width;
-    expect(
-      listWidth,
-      closeTo(WindowLayout.evenPaneWidth(820 - WindowLayout.railWidth), 1),
-    );
+    expect(listWidth, closeTo(WindowLayout.evenPaneWidth(820), 1));
 
     await tester.tap(find.text(_work));
     await tester.pumpAndSettle();
@@ -93,20 +91,21 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('main-rail')), findsOneWidget);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.text('共有的账本'), findsOneWidget);
     expect(find.text(_ledger), findsOneWidget);
     expect(_tile(tester, _ledger).selected, isTrue);
   });
 
-  testWidgets('安全区扣掉后不够宽时只有侧栏和单栏', (tester) async {
-    await _surface(tester, const Size(669, 951), left: 50, right: 34);
+  testWidgets('安全区扣掉后不够宽时只有单栏', (tester) async {
+    // 无侧栏时：可用宽 − 240 < 320 才退回单栏（669 − 120 = 549）。
+    await _surface(tester, const Size(669, 951), left: 60, right: 60);
     final router = createAppRouter(initialLocation: '/learn/library');
     addTearDown(router.dispose);
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('main-rail')), findsOneWidget);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.text('选一节资料'), findsNothing);
     await tester.tap(find.text(_ledger));
     await tester.pumpAndSettle();

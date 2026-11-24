@@ -67,7 +67,7 @@ class WindowLayout {
     return WindowLayout(wide: wide, canSplit: canSplit);
   }
 
-  /// 三栏时中栏和右栏对半。
+  /// 双栏时左右对半。
   static double evenPaneWidth(double slot) {
     if (!slot.isFinite || slot <= 0) return 0;
     return slot / 2;

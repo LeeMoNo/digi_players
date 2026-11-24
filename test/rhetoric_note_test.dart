@@ -25,7 +25,7 @@ void main() {
   });
 
   testWidgets('新币一节末尾的卡片链回这一节', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 4000));
+    await tester.binding.setSurfaceSize(const Size(800, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -37,8 +37,18 @@ void main() {
     expect(find.text('「稳赚」：赌博话术 · 诈骗话术'), findsOneWidget);
     expect(find.text('「内幕」：赌博话术 · 诈骗话术'), findsOneWidget);
     expect(find.text('「保本」：赌博话术 · 诈骗话术'), findsOneWidget);
-    expect(find.text(HomeContent.anotherBetLine), findsOneWidget);
-    expect(find.text('回到「新币的一生」'), findsOneWidget);
     expect(find.textContaining('治愈赌瘾'), findsNothing);
+
+    final back = find.text('回到「新币的一生」');
+    await tester.scrollUntilVisible(back, 200);
+    await tester.pumpAndSettle();
+    expect(find.text(HomeContent.anotherBetLine), findsOneWidget);
+
+    final list = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    expect(list.position.pixels, greaterThan(0));
+
+    await tester.tap(back);
+    await tester.pumpAndSettle();
+    expect(list.position.pixels, 0);
   });
 }

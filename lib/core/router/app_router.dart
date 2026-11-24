@@ -10,13 +10,16 @@ import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/library_screen.dart';
 import 'package:digi_players/features/learn/library_split.dart';
 import 'package:digi_players/features/learn/quiz_screen.dart';
+import 'package:digi_players/features/points/points_history_screen.dart';
 import 'package:digi_players/features/points/profile_screen.dart';
+import 'package:digi_players/features/auth/totp_prompt.dart';
 import 'package:digi_players/features/settings/avatar_screen.dart';
 import 'package:digi_players/features/settings/language_screen.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
 import 'package:digi_players/features/settings/nickname_screen.dart';
 import 'package:digi_players/features/settings/settings_split.dart';
 import 'package:digi_players/features/settings/theme_screen.dart';
+import 'package:digi_players/features/settings/totp_screen.dart';
 import 'package:digi_players/features/square/square_chat_screen.dart';
 import 'package:digi_players/features/square/square_split.dart';
 import 'package:flutter/material.dart';
@@ -34,13 +37,18 @@ final initialLocationProvider = Provider<String>((_) => '/learn');
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = createAppRouter(
     initialLocation: ref.read(initialLocationProvider),
+    navigatorKey: rootNavigatorKey,
   );
   ref.onDispose(router.dispose);
   return router;
 });
 
-GoRouter createAppRouter({required String initialLocation}) {
+GoRouter createAppRouter({
+  required String initialLocation,
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: initialLocation,
     observers: [appRouteObserver],
     routes: [
@@ -112,7 +120,16 @@ GoRouter createAppRouter({required String initialLocation}) {
               ),
             ],
           ),
-          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          GoRoute(
+            path: '/profile',
+            builder: (_, __) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path: 'points',
+                builder: (_, __) => const PointsHistoryScreen(),
+              ),
+            ],
+          ),
           ShellRoute(
             builder: (context, state, child) => SquareSplitShell(child: child),
             routes: [
@@ -159,6 +176,7 @@ GoRouter createAppRouter({required String initialLocation}) {
                     path: 'mnemonic',
                     builder: (_, __) => const MnemonicViewScreen(),
                   ),
+                  GoRoute(path: 'totp', builder: (_, __) => const TotpScreen()),
                 ],
               ),
             ],

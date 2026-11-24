@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
-import '../../core/layout/window_layout_host.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/storage/secure_storage.dart';
 import '../games/games_home_screen.dart';
 import '../learn/learn_home_screen.dart';
 import '../points/profile_repository.dart';
 import 'language_screen.dart';
+import 'settings_split.dart';
 import 'theme_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -22,7 +22,8 @@ class SettingsScreen extends ConsumerWidget {
   void _open(BuildContext context, String detail) {
     if (detail == selectedDetail) return;
     final location = '/settings/$detail';
-    if (!WindowLayoutScope.layoutOf(context).canSplit) {
+    // 跟分栏壳实际是否切开对齐；设置藏侧栏后，比 layout.canSplit 更宽也能双栏。
+    if (!SettingsSplitScope.splittingOf(context)) {
       context.push(location);
       return;
     }
@@ -99,6 +100,15 @@ class SettingsScreen extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _open(context, 'mnemonic'),
+            ),
+            ListTile(
+              contentPadding: chevronTilePadding,
+              selected: selectedDetail == 'totp',
+              leading: const Icon(Icons.phonelink_lock_outlined),
+              title: const Text('二次验证'),
+              subtitle: const Text('验证器动态码。助记词之外，再要一个 30 秒一变的数字。'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(context, 'totp'),
             ),
 
             // ── 关于 ──────────────────────────────────────

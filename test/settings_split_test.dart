@@ -88,9 +88,11 @@ void main() {
     await tester.pumpWidget(_app(router, HorizontalSizeClass.regular));
     await _flush(tester);
 
+    expect(find.widgetWithText(AppBar, '设置'), findsOneWidget);
     expect(find.widgetWithText(AppBar, '设置昵称'), findsOneWidget);
     expect(find.text('我的昵称'), findsOneWidget);
-    expect(find.byIcon(Icons.menu), findsNothing);
+    expect(find.byKey(const Key('main-rail')), findsNothing);
+    expect(find.byKey(const Key('rail-menu')), findsNothing);
     expect(find.text('版本'), findsOneWidget);
     expect(find.text('退出登录'), findsOneWidget);
 

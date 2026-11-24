@@ -12,6 +12,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/utils/proof_hash.dart';
 import 'hash_game_logic.dart';
+import 'hash_game_progress.dart';
 
 class HashGameScreen extends StatefulWidget {
   const HashGameScreen({super.key});
@@ -40,6 +41,7 @@ class _State extends State<HashGameScreen> {
   void initState() {
     super.initState();
     _recompute(notify: false);
+    _restoreProgress();
     _fetchSeed();
   }
 
@@ -47,6 +49,22 @@ class _State extends State<HashGameScreen> {
   void dispose() {
     _nonceCtrl.dispose();
     super.dispose();
+  }
+
+  /// 有中途进度就跳到下一关；没有或读失败则留在当前关。
+  Future<void> _restoreProgress() async {
+    final checkpoint = await HashGameProgress.load();
+    if (!mounted || checkpoint.level <= 0) return;
+    setState(() {
+      _level = checkpoint.level;
+      _solvedNonces
+        ..clear()
+        ..addAll(checkpoint.solvedNonces);
+      _nonce = 0;
+      _levelDone = false;
+    });
+    _writeNonceField('0');
+    _recompute();
   }
 
   // 游戏开始时从服务端拿 seed
@@ -70,15 +88,29 @@ class _State extends State<HashGameScreen> {
       hash,
       HashGameLogic.difficulties[_level],
     );
+    final justCleared = done && !_levelDone;
     if (!notify) {
       _hash = hash;
       _levelDone = done;
-      return;
+    } else {
+      setState(() {
+        _hash = hash;
+        _levelDone = done;
+      });
     }
-    setState(() {
-      _hash = hash;
-      _levelDone = done;
-    });
+    // 本关刚通过：记下下一关，下次进来直接从那里开始。
+    // 启动时的首次计算不写进度，避免误把恢复中的关卡再往前推。
+    if (justCleared && notify) {
+      final nextLevel = _level + 1;
+      if (nextLevel < HashGameLogic.levels.length) {
+        HashGameProgress.save(
+          HashGameCheckpoint(
+            level: nextLevel,
+            solvedNonces: [..._solvedNonces, _nonce],
+          ),
+        );
+      }
+    }
   }
 
   void _writeNonceField(String text) {
@@ -121,6 +153,10 @@ class _State extends State<HashGameScreen> {
       _level++;
       _nonce = 0;
       _writeNonceField('0');
+      // 进度已在通关时写入；这里再写一次，保证与当前关卡一致。
+      HashGameProgress.save(
+        HashGameCheckpoint(level: _level, solvedNonces: List.of(_solvedNonces)),
+      );
       _recompute();
     } else {
       // 三关全过，上报积分
@@ -138,6 +174,7 @@ class _State extends State<HashGameScreen> {
     final already = await ProgressStore.hasFlag('game_done_game_hash');
     try {
       await ProgressStore.markFlag('game_done_game_hash');
+      await HashGameProgress.clear();
     } on ProgressNotSaved {
       if (!mounted) return;
       setState(() {

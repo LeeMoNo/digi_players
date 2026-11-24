@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/window_layout_host.dart';
 
-/// 资料、广场、设置在够宽时是列表加详情，再算上侧栏就是三栏。
-bool showsSplitPane(String path) {
-  return path.startsWith('/learn/library') ||
-      path.startsWith('/square') ||
-      path.startsWith('/settings');
+/// 列表-详情页宽屏只留两栏，不带主导航侧栏（资料、广场、设置）。
+bool hidesMainRail(String path) {
+  return path.startsWith('/settings') ||
+      path.startsWith('/learn/library') ||
+      path.startsWith('/square');
 }
 
 /// 底栏只留在三个主页面。设置、章节、练习关卡这些子页面不再垫一层导航。
@@ -91,8 +91,7 @@ class _MainShellState extends State<MainShell> {
     final index = _currentIndex(path);
     final layout = WindowLayoutScope.layoutOf(context);
     final wide = layout.wide;
-    final threePane = wide && layout.canSplit && showsSplitPane(path);
-    final expandRail = _railExpanded && !threePane;
+    final hideRail = wide && hidesMainRail(path);
     final showBottomBar = !wide && showsMainNavigation(path);
     final scheme = Theme.of(context).colorScheme;
 
@@ -100,12 +99,11 @@ class _MainShellState extends State<MainShell> {
       top: false,
       bottom: false,
       child: Scaffold(
-        body: wide
+        body: wide && !hideRail
             ? Row(
                 children: [
                   _SideRail(
-                    expanded: expandRail,
-                    showMenu: !threePane,
+                    expanded: _railExpanded,
                     selectedIndex: index,
                     onMenu: () => setState(() {
                       _railExpanded = !_railExpanded;
@@ -141,7 +139,6 @@ class _MainShellState extends State<MainShell> {
 class _SideRail extends StatelessWidget {
   const _SideRail({
     required this.expanded,
-    required this.showMenu,
     required this.selectedIndex,
     required this.onMenu,
     required this.onSelected,
@@ -152,7 +149,6 @@ class _SideRail extends StatelessWidget {
   static const extendedWidth = 200.0;
 
   final bool expanded;
-  final bool showMenu;
   final int selectedIndex;
   final VoidCallback onMenu;
   final ValueChanged<int> onSelected;
@@ -175,14 +171,13 @@ class _SideRail extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showMenu)
-                IconButton(
-                  key: const Key('rail-menu'),
-                  alignment: Alignment.centerLeft,
-                  tooltip: expanded ? '收起' : '展开',
-                  icon: const Icon(Icons.menu),
-                  onPressed: onMenu,
-                ),
+              IconButton(
+                key: const Key('rail-menu'),
+                alignment: Alignment.centerLeft,
+                tooltip: expanded ? '收起' : '展开',
+                icon: const Icon(Icons.menu),
+                onPressed: onMenu,
+              ),
               for (var i = 0; i < tabs.length; i++)
                 _RailDestination(
                   icon: tabs[i].icon,

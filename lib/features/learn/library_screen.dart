@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
-import '../../core/layout/window_layout_host.dart';
 import '../home/data/home_content.dart';
 import '../home/widgets/home_widgets.dart';
+import 'library_split.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key, this.selectedEraId});
@@ -16,7 +16,7 @@ class LibraryScreen extends StatelessWidget {
   void _openEra(BuildContext context, String eraId) {
     if (eraId == selectedEraId) return;
     final location = '/learn/library/$eraId';
-    if (!WindowLayoutScope.layoutOf(context).canSplit) {
+    if (!LibrarySplitScope.splittingOf(context)) {
       context.push(location);
       return;
     }
@@ -83,14 +83,36 @@ class LibraryScreen extends StatelessWidget {
   }
 }
 
-class EraDetailScreen extends StatelessWidget {
+class EraDetailScreen extends StatefulWidget {
   const EraDetailScreen({super.key, required this.eraId});
 
   final String eraId;
 
   @override
+  State<EraDetailScreen> createState() => _EraDetailScreenState();
+}
+
+class _EraDetailScreenState extends State<EraDetailScreen> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _scrollToTop() {
+    if (!_scroll.hasClients) return;
+    _scroll.animateTo(
+      0,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final era = HomeContent.eraById(eraId);
+    final era = HomeContent.eraById(widget.eraId);
     if (era == null) {
       return Scaffold(
         appBar: AppBar(
@@ -111,6 +133,7 @@ class EraDetailScreen extends StatelessWidget {
       appBar: AppBar(leading: appBarLeading(context), title: Text(era.when)),
       body: ReadingWidth(
         child: ListView(
+          controller: _scroll,
           padding: const EdgeInsets.all(16),
           children: [
             Text(era.title, style: Theme.of(context).textTheme.headlineSmall),
@@ -208,7 +231,7 @@ class EraDetailScreen extends StatelessWidget {
                 ),
             ],
             const SizedBox(height: 24),
-            const _AnotherBetCard(),
+            _AnotherBetCard(title: era.title, onBackToTop: _scrollToTop),
           ],
         ),
       ),
@@ -235,14 +258,13 @@ class _RhetoricMarks extends StatelessWidget {
 }
 
 class _AnotherBetCard extends StatelessWidget {
-  const _AnotherBetCard();
+  const _AnotherBetCard({required this.title, required this.onBackToTop});
+
+  final String title;
+  final VoidCallback onBackToTop;
 
   @override
   Widget build(BuildContext context) {
-    final era = context.findAncestorWidgetOfExactType<EraDetailScreen>();
-    final title = era == null
-        ? '这一节'
-        : HomeContent.eraById(era.eraId)?.title ?? '这一节';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -253,13 +275,7 @@ class _AnotherBetCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
-                onPressed: () {
-                  Scrollable.maybeOf(context)?.position.animateTo(
-                    0,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                  );
-                },
+                onPressed: onBackToTop,
                 child: Text('回到「$title」'),
               ),
             ),
