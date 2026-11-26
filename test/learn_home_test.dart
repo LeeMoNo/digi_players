@@ -1,9 +1,11 @@
 import 'package:digi_players/features/home/daily_task_card.dart';
+import 'package:digi_players/features/home/data/home_content.dart';
 import 'package:digi_players/features/learn/learn_home_screen.dart';
 import 'package:digi_players/features/learn/learn_path.dart';
 import 'package:digi_players/features/learn/library_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   tearDown(LearnHomeCache.clear);
@@ -32,6 +34,13 @@ void main() {
     expect(step.title, '这条路径走完了');
     expect(step.button, '去资料里看年史和骗局');
     expect(step.route, '/learn/library');
+    expect(step.readingEraId, isNull);
+  });
+
+  test('未完成时继续步带相关资料 era', () {
+    final step = nextLearnStep(const LearnPathProgress(chapter1: true));
+    expect(step.readingEraId, 'ledger');
+    expect(HomeContent.eraById(step.readingEraId!)?.title, isNotEmpty);
   });
 
   test('未开始时下一步是第一节', () {
@@ -57,6 +66,8 @@ void main() {
     expect(find.text('加密货币发展年史'), findsNothing);
     expect(find.text('概念速查'), findsNothing);
     expect(find.text('今天的题暂时取不到'), findsOneWidget);
+    expect(find.byKey(const Key('continue-related')), findsOneWidget);
+    expect(find.text('相关资料 · 共有的账本'), findsWidgets);
     await tester.scrollUntilVisible(
       find.text('资料'),
       300,
@@ -66,6 +77,47 @@ void main() {
       ),
     );
     expect(find.text('资料'), findsOneWidget);
+  });
+
+  testWidgets('路径走完后继续卡一键进资料', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/learn',
+      routes: [
+        GoRoute(
+          path: '/learn',
+          builder: (_, __) => LearnHomeScreen(
+            loadProgress: () async => const LearnPathProgress(
+              chapter1: true,
+              block: true,
+              hash: true,
+              p2p: true,
+              chapter2: true,
+              antiscam: true,
+            ),
+            loadChapters: () async {},
+            dailyTask: const SizedBox.shrink(),
+          ),
+          routes: [
+            GoRoute(
+              path: 'library',
+              builder: (_, __) => const LibraryScreen(),
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    expect(find.text('这条路径走完了'), findsOneWidget);
+    expect(find.text('去资料里看年史和骗局'), findsOneWidget);
+    expect(find.byKey(const Key('continue-related')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('continue-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('1998–2009 · 共有的账本'), findsOneWidget);
   });
 
   testWidgets('章节拉取失败时继续卡可以重试，每日题仍占位', (tester) async {
@@ -81,7 +133,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('章节暂时取不到'), findsOneWidget);
-    expect(find.text('重试'), findsOneWidget);
+    expect(find.text('重试'), findsNWidgets(2)); // 继续卡 + 每日题
     expect(find.text('今天的题暂时取不到'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });

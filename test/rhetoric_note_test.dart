@@ -24,7 +24,7 @@ void main() {
     expect(HomeContent.anotherBetLine.contains('治愈'), isFalse);
   });
 
-  testWidgets('新币一节末尾的卡片链回这一节', (tester) async {
+  testWidgets('提醒只出现在新币一节，其他资料没有', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -39,16 +39,16 @@ void main() {
     expect(find.text('「保本」：赌博话术 · 诈骗话术'), findsOneWidget);
     expect(find.textContaining('治愈赌瘾'), findsNothing);
 
-    final back = find.text('回到「新币的一生」');
-    await tester.scrollUntilVisible(back, 200);
+    final note = find.text(HomeContent.anotherBetLine);
+    await tester.scrollUntilVisible(note, 200);
     await tester.pumpAndSettle();
-    expect(find.text(HomeContent.anotherBetLine), findsOneWidget);
+    expect(note, findsOneWidget);
+    expect(find.textContaining('回到「'), findsNothing);
 
-    final list = tester.state<ScrollableState>(find.byType(Scrollable).first);
-    expect(list.position.pixels, greaterThan(0));
-
-    await tester.tap(back);
+    await tester.pumpWidget(
+      const MaterialApp(home: EraDetailScreen(eraId: 'stablecoin')),
+    );
     await tester.pumpAndSettle();
-    expect(list.position.pixels, 0);
+    expect(find.text(HomeContent.anotherBetLine), findsNothing);
   });
 }

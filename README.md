@@ -70,10 +70,7 @@ flutter run \
   --dart-define=WORKERS_BASE_URL=https://digiplayers-workers.wasai-test.workers.dev \
   --dart-define=WORKERS_WS_URL=wss://digiplayers-workers.wasai-test.workers.dev
 
-<!-- //上线JTW生成 -->
-leewasai@leewasaideMacBook-Pro digi_players % openssl rand -base64 48
-KfQW8n1nqXoveeaHnmOWCRu3vqG+OgX+3iJU4gbSX5WVgI14N1qY//fQWA7vWQkr
-
+JWT 等密钥只放在 Cloudflare / 本地环境变量里，不要写进本仓库。需要新密钥时在本机执行 `openssl rand -base64 48`，把输出贴到密钥管理处，不要提交。
 
 后续开发：
 加入一个各种稳定币的简介。
@@ -88,4 +85,8 @@ TOTP、passkey
 折叠屏适配方法论，设置界面有个开关选项，用户可以选择不同的模式，比如Google Material Design 3 ，双栏主布局，二栏滑动（传统是手动点击底部导航标题，现在是直接左右滑动即可），
 
 - 折叠屏的页面打开方式将有变化，比如点击设置按钮，那么设置页面从右侧往左侧推出（挤出来的效果），而不是现在的效果。点击设置界面的子栏目（比如主题），子页面又从右侧向左侧挤出来。点击左上角的返回图标时，原路缩回去，页面像是向右侧推进。这个过程页面保持三栏目，比如打开设置界面时，这时中栏可能是学习页面，右栏是设置页面，，若是打开主题页，这个时候中栏是设置页面（原来的学习中栏被挤出左侧屏幕了），右栏是主题页面。
+
+谨防诈骗内容。
+
+数民广场改成游戏大厅，随机找一个人聊天，或者拉几个人组局聊天，有人可以举办演讲活动。
 

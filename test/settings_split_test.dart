@@ -53,7 +53,18 @@ void main() {
       find.text('助记词就是这个学习账号。换一台设备用同一组词登录，进度还在。把词交给别人，对方看到的也是这份进度。'),
       findsOneWidget,
     );
+    await tester.scrollUntilVisible(
+      find.text('退出登录'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('退出登录'), findsOneWidget);
+    expect(find.text('删除账号'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('我的昵称'),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     await tester.tap(find.text('我的昵称'));
     await _afterNav(tester);

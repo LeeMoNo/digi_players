@@ -15,6 +15,8 @@ import 'package:digi_players/features/points/profile_screen.dart';
 import 'package:digi_players/features/auth/totp_prompt.dart';
 import 'package:digi_players/features/settings/avatar_screen.dart';
 import 'package:digi_players/features/settings/language_screen.dart';
+import 'package:digi_players/features/settings/legal_screen.dart';
+import 'package:digi_players/features/settings/legal_text.dart';
 import 'package:digi_players/features/settings/mnemonic_view_screen.dart';
 import 'package:digi_players/features/settings/nickname_screen.dart';
 import 'package:digi_players/features/settings/settings_split.dart';
@@ -71,6 +73,15 @@ GoRouter createAppRouter({
         builder: (context, state) => const RecoverScreen(),
       ),
       GoRoute(path: '/intro', builder: (context, state) => const IntroScreen()),
+      // 未登录也可打开；不进 MainShell，避免误报每日登录。
+      GoRoute(
+        path: '/privacy',
+        builder: (_, __) => const LegalScreen(doc: LegalDoc.privacy),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (_, __) => const LegalScreen(doc: LegalDoc.terms),
+      ),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -177,6 +188,15 @@ GoRouter createAppRouter({
                     builder: (_, __) => const MnemonicViewScreen(),
                   ),
                   GoRoute(path: 'totp', builder: (_, __) => const TotpScreen()),
+                  GoRoute(
+                    path: 'privacy',
+                    builder: (_, __) =>
+                        const LegalScreen(doc: LegalDoc.privacy),
+                  ),
+                  GoRoute(
+                    path: 'terms',
+                    builder: (_, __) => const LegalScreen(doc: LegalDoc.terms),
+                  ),
                 ],
               ),
             ],

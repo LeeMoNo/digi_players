@@ -1,7 +1,6 @@
 // lib/features/settings/mnemonic_view_screen.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
@@ -221,6 +220,7 @@ class _State extends State<MnemonicViewScreen> {
         ),
         child: const Text(
           '请勿截图或拍照！截图可能被其他应用读取。\n'
+          '不要截屏发给别人，也不要粘贴到聊天里。\n'
           '建议手抄后立即离开此页面。',
           style: TextStyle(fontSize: 13, color: Colors.red),
         ),
@@ -249,20 +249,6 @@ class _State extends State<MnemonicViewScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      OutlinedButton.icon(
-        icon: const Icon(Icons.copy, size: 16),
-        label: const Text('复制到剪贴板'),
-        onPressed: () {
-          Clipboard.setData(ClipboardData(text: _mnemonic.join(' ')));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('已复制，请尽快粘贴到安全的地方'),
-              duration: Duration(seconds: 4),
-            ),
-          );
-        },
-      ),
-      const SizedBox(height: 8),
       Text(
         '离开此页面后，助记词不会再自动显示。',
         textAlign: TextAlign.center,

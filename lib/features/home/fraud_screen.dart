@@ -13,6 +13,15 @@ class FraudScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 从反诈练习链过来时，把对应条目提到套路区最前，返回后练习页还在栈里。
+    final scams = [
+      if (highlightScamId != null)
+        for (final scam in HomeContent.fraudScamPatterns)
+          if (scam.id == highlightScamId) scam,
+      for (final scam in HomeContent.fraudScamPatterns)
+        if (scam.id != highlightScamId) scam,
+    ];
+
     return Scaffold(
       appBar: AppBar(
         leading: appBarLeading(context),
@@ -28,7 +37,7 @@ class FraudScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _SectionHeader(title: '常见套路', icon: Icons.warning_amber_outlined),
-            ...HomeContent.fraudScamPatterns.map(
+            ...scams.map(
               (scam) => _ScamCard(
                 scam: scam,
                 highlighted: scam.id == highlightScamId,

@@ -68,6 +68,8 @@ void main() {
     await _openAndBack(tester, router, '/settings/theme', '主题');
     await _openAndBack(tester, router, '/settings/avatar', '我的头像');
     await _openAndBack(tester, router, '/settings/mnemonic', '查看助记词');
+    await _openAndBack(tester, router, '/settings/privacy', '隐私政策');
+    await _openAndBack(tester, router, '/settings/terms', '用户协议');
     await _openAndBack(tester, router, '/games/hash', '哈希碰碰乐  关卡 1/3');
     await _openAndBack(tester, router, '/games/antiscam', '反诈训练营  1/');
     await _openAndBack(tester, router, '/game/p2p', 'P2P 模拟器  关卡 1/3');

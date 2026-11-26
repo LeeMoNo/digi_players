@@ -367,7 +367,7 @@ class _State extends State<AntiscamScreen> {
     return Scaffold(
       body: FoldSide(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -407,7 +407,28 @@ class _State extends State<AntiscamScreen> {
                   const Text('进度已记下', style: TextStyle(color: Colors.green)),
                   EarnedBadgeNote(badges: _earned),
                 ],
-                const SizedBox(height: 32),
+                if (!_loading) ...[
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '复习这些骗局说明',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final link in antiscamReviewLinks)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: OutlinedButton(
+                        key: Key('review-scam-${link.scamId}'),
+                        onPressed: () =>
+                            context.push('/learn/fraud?scam=${link.scamId}'),
+                        child: Text('查看「${link.label}」'),
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 24),
                 if (passed && _saveFailed)
                   FilledButton(
                     onPressed: _loading ? null : _submitScore,

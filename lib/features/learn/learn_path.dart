@@ -27,10 +27,14 @@ class LearnPathStep {
   final String button;
   final String route;
 
+  /// 继续卡上「相关资料」指向的时间小节；路径走完时为空。
+  final String? readingEraId;
+
   const LearnPathStep({
     required this.title,
     required this.button,
     required this.route,
+    this.readingEraId,
   });
 }
 
@@ -55,29 +59,38 @@ const _steps = [
     title: '第一节 · 共有的账本',
     button: '继续阅读',
     route: '/learn/chapter/ch_001',
+    readingEraId: 'ledger',
   ),
   LearnPathStep(
     title: '练习 · 区块链拼图',
     button: '去做练习',
     route: '/game/block-puzzle',
+    readingEraId: 'ledger',
   ),
-  LearnPathStep(title: '练习 · 哈希碰碰乐', button: '去做练习', route: '/games/hash'),
-  LearnPathStep(title: '练习 · 节点怎么传消息', button: '去做练习', route: '/game/p2p'),
+  LearnPathStep(
+    title: '练习 · 哈希碰碰乐',
+    button: '去做练习',
+    route: '/games/hash',
+    readingEraId: 'work',
+  ),
+  LearnPathStep(
+    title: '练习 · 节点怎么传消息',
+    button: '去做练习',
+    route: '/game/p2p',
+    readingEraId: 'broadcast',
+  ),
   LearnPathStep(
     title: '第二节 · 密码学入门',
     button: '继续阅读',
     route: '/learn/chapter/ch_002',
+    readingEraId: 'custody',
   ),
-  LearnPathStep(title: '练习 · 反诈识别', button: '去做练习', route: '/games/antiscam'),
-];
-
-const _readingEraIds = [
-  'ledger',
-  'ledger',
-  'work',
-  'broadcast',
-  'custody',
-  'new_coins',
+  LearnPathStep(
+    title: '练习 · 反诈识别',
+    button: '去做练习',
+    route: '/games/antiscam',
+    readingEraId: 'new_coins',
+  ),
 ];
 
 const _doneStep = LearnPathStep(
@@ -119,7 +132,7 @@ List<LearnCatalogItem> learnCatalog(LearnPathProgress progress) {
         route: _steps[i].route,
         done: flags[i],
         current: i == currentIndex,
-        readingEraId: _readingEraIds[i],
+        readingEraId: _steps[i].readingEraId,
       ),
   ];
 }

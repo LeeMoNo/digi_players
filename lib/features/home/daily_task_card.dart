@@ -8,7 +8,11 @@ import '../../core/utils/shuffled_options.dart';
 typedef DailyAnswerSubmit =
     Future<bool> Function(Object? qId, int selectedIndex);
 
-//每日任务卡片
+/// 每日一题。
+///
+/// Workers `GET /daily/quiz` 目前按 `did + UTC 日期` 哈希从固定题池抽题，
+/// **不接受**路径步骤等查询参数（无 `path_step` / `focus`）。
+/// 因此这里不传「当前未完成步骤」，也不做本地题库兜底；失败或空题只留占位文案。
 class DailyTaskCard extends StatefulWidget {
   const DailyTaskCard({super.key, this.loader, this.submitAnswer, this.random});
 
@@ -40,10 +44,20 @@ class _State extends State<DailyTaskCard> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _load(resetUi: false);
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool resetUi = true}) async {
+    if (resetUi) {
+      setState(() {
+        _loading = true;
+        _quiz = null;
+        _shown = null;
+        _selectedDisplay = null;
+        _answeredCorrect = null;
+        _completedToday = false;
+      });
+    }
     try {
       final data = widget.loader != null
           ? await widget.loader!()
@@ -59,11 +73,13 @@ class _State extends State<DailyTaskCard> {
       if (!mounted) return;
       setState(() {
         _quiz = null;
+        _shown = null;
         _loading = false;
       });
     }
   }
 
+  /// 接口无贴路径能力；故意不带进度查询参数。见类注释。
   Future<Map<String, dynamic>?> _loadFromApi() async {
     final res = await ApiClient.dio.get('/daily/quiz');
     final data = res.data;
@@ -187,9 +203,16 @@ class _State extends State<DailyTaskCard> {
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          else if (unavailable || shown == null)
-            const Text('今天的题暂时取不到')
-          else ...[
+          else if (unavailable || shown == null) ...[
+            const Text('今天的题暂时取不到'),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: _load,
+                child: const Text('重试'),
+              ),
+            ),
+          ] else ...[
             Text(
               _questionText,
               style: const TextStyle(fontSize: 14, height: 1.5),

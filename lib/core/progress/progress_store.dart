@@ -116,4 +116,17 @@ class ProgressStore {
     if (box.get(_syncedKey, defaultValue: false) != true) return null;
     return box;
   }
+
+  /// 删除账号成功后清掉本机该 DID 的进度缓存，避免同词再登录时短暂看到旧完成态。
+  static Future<void> clearLocalCache() async {
+    final did = await SecureStorage.getDID();
+    if (did == null || did.isEmpty) return;
+    await clearLocalCacheFor(did);
+  }
+
+  static Future<void> clearLocalCacheFor(String did) async {
+    if (did.isEmpty) return;
+    final box = await Hive.openBox(_boxName(did));
+    await box.clear();
+  }
 }

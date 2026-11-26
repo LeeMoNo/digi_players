@@ -8,7 +8,6 @@ import 'package:digi_players/core/storage/secure_storage.dart';
 import 'package:digi_players/features/auth/intro_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 class MnemonicScreen extends StatefulWidget {
@@ -120,7 +119,8 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
                   ),
                   child: Text(
                     '请将以下 12 个单词按顺序抄写到纸上，并保存在安全的地方。'
-                    '这是恢复你账号的唯一方式，丢失后无法找回。',
+                    '这是恢复你账号的唯一方式，丢失后无法找回。'
+                    '不要截屏发给别人，也不要粘贴到聊天里。',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onErrorContainer,
                     ),
@@ -152,21 +152,6 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
                       style: const TextStyle(fontFamily: 'monospace'),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-
-                // 一键复制（方便测试，生产环境可考虑移除）
-                TextButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(
-                      ClipboardData(text: widget.mnemonic.join(' ')),
-                    );
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('已复制到剪贴板')));
-                  },
-                  icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('复制助记词'),
                 ),
                 const SizedBox(height: 24),
 

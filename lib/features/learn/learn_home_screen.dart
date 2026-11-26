@@ -196,6 +196,9 @@ class _ContinueCard extends StatelessWidget {
         ? '继续'
         : step.title;
     final button = failed ? '重试' : step.button;
+    final era = step.readingEraId == null
+        ? null
+        : HomeContent.eraById(step.readingEraId!);
 
     return Card(
       child: Padding(
@@ -221,7 +224,7 @@ class _ContinueCard extends StatelessWidget {
                   Text('正在读取章节'),
                 ],
               )
-            else
+            else ...[
               FilledButton(
                 key: const Key('continue-button'),
                 onPressed: failed
@@ -229,6 +232,15 @@ class _ContinueCard extends StatelessWidget {
                     : () => context.push(step.route),
                 child: Text(button),
               ),
+              if (!failed && era != null) ...[
+                const SizedBox(height: 4),
+                TextButton(
+                  key: const Key('continue-related'),
+                  onPressed: () => context.push('/learn/library/${era.id}'),
+                  child: Text('相关资料 · ${era.title}'),
+                ),
+              ],
+            ],
           ],
         ),
       ),
@@ -270,12 +282,16 @@ class _CatalogTile extends StatelessWidget {
             onTap: open ? () => context.push(item.route) : null,
           ),
           if (era != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => context.push('/learn/library/${era.id}'),
-                child: Text('相关资料 · ${era.title}'),
+            ListTile(
+              contentPadding: chevronTilePadding,
+              dense: true,
+              leading: const Icon(Icons.menu_book_outlined, size: 20),
+              title: Text(
+                '相关资料 · ${era.title}',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => context.push('/learn/library/${era.id}'),
             ),
         ],
       ),

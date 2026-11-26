@@ -11,6 +11,9 @@ class ScamQuestion {
   final List<String> options;
   final int? answerIndex;
 
+  /// 链回骗局页时按钮上的称呼；空则用条目原标题。
+  final String? linkLabel;
+
   const ScamQuestion({
     required this.scenario,
     required this.isScam,
@@ -19,10 +22,28 @@ class ScamQuestion {
     this.scamId,
     this.options = const [],
     this.answerIndex,
+    this.linkLabel,
   });
 
   bool get isChoice => kind == AntiscamKind.choice;
 }
+
+/// 结算页固定复习这三则：假空投、杀猪盘、付费解冻。
+class AntiscamReviewLink {
+  const AntiscamReviewLink({
+    required this.scamId,
+    required this.label,
+  });
+
+  final String scamId;
+  final String label;
+}
+
+const antiscamReviewLinks = [
+  AntiscamReviewLink(scamId: 'fake_airdrop', label: '假空投'),
+  AntiscamReviewLink(scamId: 'pig_butchering', label: '杀猪盘'),
+  AntiscamReviewLink(scamId: 'impersonation', label: '付费解冻'),
+];
 
 /// 用骗局条目的信号当会点的选项，最后一项是不点。
 ScamQuestion choiceFromScam(String scamId, {String? heading}) {
@@ -34,6 +55,7 @@ ScamQuestion choiceFromScam(String scamId, {String? heading}) {
     isScam: true,
     analysis: scam.detail,
     scamId: scamId,
+    linkLabel: heading,
     options: [...scam.signals, '以上都不点'],
     answerIndex: scam.signals.length,
   );
@@ -42,7 +64,7 @@ ScamQuestion choiceFromScam(String scamId, {String? heading}) {
 String? scamPageTitle(ScamQuestion question) {
   final id = question.scamId;
   if (id == null) return null;
-  return HomeContent.scamById(id)?.title;
+  return question.linkLabel ?? HomeContent.scamById(id)?.title;
 }
 
 const List<ScamQuestion> antiscamQuestions = [

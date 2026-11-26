@@ -83,36 +83,14 @@ class LibraryScreen extends StatelessWidget {
   }
 }
 
-class EraDetailScreen extends StatefulWidget {
+class EraDetailScreen extends StatelessWidget {
   const EraDetailScreen({super.key, required this.eraId});
 
   final String eraId;
 
   @override
-  State<EraDetailScreen> createState() => _EraDetailScreenState();
-}
-
-class _EraDetailScreenState extends State<EraDetailScreen> {
-  final _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _scrollToTop() {
-    if (!_scroll.hasClients) return;
-    _scroll.animateTo(
-      0,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final era = HomeContent.eraById(widget.eraId);
+    final era = HomeContent.eraById(eraId);
     if (era == null) {
       return Scaffold(
         appBar: AppBar(
@@ -133,7 +111,6 @@ class _EraDetailScreenState extends State<EraDetailScreen> {
       appBar: AppBar(leading: appBarLeading(context), title: Text(era.when)),
       body: ReadingWidth(
         child: ListView(
-          controller: _scroll,
           padding: const EdgeInsets.all(16),
           children: [
             Text(era.title, style: Theme.of(context).textTheme.headlineSmall),
@@ -171,6 +148,8 @@ class _EraDetailScreenState extends State<EraDetailScreen> {
                 ),
               const SizedBox(height: 8),
               const _RhetoricMarks(),
+              const SizedBox(height: 24),
+              const _AnotherBetCard(),
             ],
             if (events.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -230,8 +209,6 @@ class _EraDetailScreenState extends State<EraDetailScreen> {
                   ),
                 ),
             ],
-            const SizedBox(height: 24),
-            _AnotherBetCard(title: era.title, onBackToTop: _scrollToTop),
           ],
         ),
       ),
@@ -258,29 +235,14 @@ class _RhetoricMarks extends StatelessWidget {
 }
 
 class _AnotherBetCard extends StatelessWidget {
-  const _AnotherBetCard({required this.title, required this.onBackToTop});
-
-  final String title;
-  final VoidCallback onBackToTop;
+  const _AnotherBetCard();
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(HomeContent.anotherBetLine),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: onBackToTop,
-                child: Text('回到「$title」'),
-              ),
-            ),
-          ],
-        ),
+        child: Text(HomeContent.anotherBetLine),
       ),
     );
   }

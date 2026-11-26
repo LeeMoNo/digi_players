@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/display_name.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
@@ -224,16 +225,18 @@ class _State extends State<ProfileScreen> with RouteAware {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Card(
-                  child: ListTile(
-                    contentPadding: chevronTilePadding,
-                    leading: const Icon(Icons.people_outline),
-                    title: const Text('数民广场'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/square'),
+                if (FeatureFlags.showSquare) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      contentPadding: chevronTilePadding,
+                      leading: const Icon(Icons.people_outline),
+                      title: const Text('数民广场'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/square'),
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 16),
 
                 // ── 积分 + 排名 ───────────────────────────

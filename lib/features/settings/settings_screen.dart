@@ -1,9 +1,12 @@
 // lib/features/settings/settings_screen.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/api/api_client.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
+import '../../core/progress/progress_store.dart';
 import '../../core/router/app_back_button.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/storage/secure_storage.dart';
@@ -114,6 +117,22 @@ class SettingsScreen extends ConsumerWidget {
             // ── 关于 ──────────────────────────────────────
             _SectionHeader('关于'),
             ListTile(
+              contentPadding: chevronTilePadding,
+              selected: selectedDetail == 'privacy',
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('隐私政策'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(context, 'privacy'),
+            ),
+            ListTile(
+              contentPadding: chevronTilePadding,
+              selected: selectedDetail == 'terms',
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('用户协议'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _open(context, 'terms'),
+            ),
+            ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('版本'),
               trailing: const Text(
@@ -125,6 +144,12 @@ class SettingsScreen extends ConsumerWidget {
               leading: const Icon(Icons.logout),
               title: const Text('退出登录', style: TextStyle(color: Colors.red)),
               onTap: () => _confirmLogout(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_forever_outlined),
+              title: const Text('删除账号', style: TextStyle(color: Colors.red)),
+              subtitle: const Text('清除服务器进度与本机钥匙，不能撤销'),
+              onTap: () => _confirmDeleteAccount(context),
             ),
           ],
         ),
@@ -152,12 +177,113 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
     if (confirm == true && context.mounted) {
-      ProfileCache.clear();
-      LearnHomeCache.clear();
-      GamesHomeCache.clear();
-      await SecureStorage.clearAll();
+      await _clearLocalSession();
       if (context.mounted) context.go('/register');
     }
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const _DeleteAccountDialog(),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ApiClient.dio.delete('/user/account');
+    } on DioException catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('没删成，请检查网络后重试')),
+      );
+      return;
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('没删成，请检查网络后重试')),
+      );
+      return;
+    }
+
+    final did = await SecureStorage.getDID();
+    await _clearLocalSession();
+    router.go('/register');
+    // 跳转后再清进度盒，避免本机存储卡住删号流程；同词登录后 pull 也会覆盖。
+    if (did != null && did.isNotEmpty) {
+      try {
+        await ProgressStore.clearLocalCacheFor(did);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _clearLocalSession() async {
+    ProfileCache.clear();
+    LearnHomeCache.clear();
+    GamesHomeCache.clear();
+    await SecureStorage.clearAll();
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool get _canConfirm => _controller.text.trim() == '删除';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('删除账号'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '会删除服务器上这个身份的进度、积分、昵称和头像。本机钥匙也会清掉。'
+            '助记词无法帮你找回已删的数据。此操作不能撤销。',
+          ),
+          const SizedBox(height: 16),
+          const Text('请输入「删除」以确认：'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: '删除',
+            ),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) {
+              if (_canConfirm) Navigator.pop(context, true);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: _canConfirm ? () => Navigator.pop(context, true) : null,
+          child: const Text('确认删除'),
+        ),
+      ],
+    );
   }
 }
 

@@ -35,6 +35,7 @@ void main() {
     await tester.pump();
     expect(find.text('第一次'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('数民广场'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
