@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/layout/chevron_inset.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_route_observer.dart';
+import '../../core/ui/user_facing_error.dart';
 import '../home/daily_task_card.dart';
 import '../home/data/home_content.dart';
 import 'learn_path.dart';
@@ -191,7 +192,7 @@ class _ContinueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = failed
-        ? '章节暂时取不到'
+        ? UserFacingError.chapterUnavailable
         : loading
         ? '继续'
         : step.title;
@@ -210,6 +211,7 @@ class _ContinueCard extends StatelessWidget {
               title,
               key: const Key('continue-title'),
               style: Theme.of(context).textTheme.titleLarge,
+              softWrap: true,
             ),
             const SizedBox(height: 12),
             if (loading)
@@ -221,23 +223,44 @@ class _ContinueCard extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 8),
-                  Text('正在读取章节'),
+                  Flexible(child: Text('正在读取章节', softWrap: true)),
                 ],
               )
             else ...[
-              FilledButton(
-                key: const Key('continue-button'),
-                onPressed: failed
-                    ? () => onRetry()
-                    : () => context.push(step.route),
-                child: Text(button),
+              Semantics(
+                container: true,
+                button: true,
+                label: button,
+                excludeSemantics: true,
+                child: FilledButton(
+                  key: const Key('continue-button'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onPressed: failed
+                      ? () => onRetry()
+                      : () => context.push(step.route),
+                  child: Text(
+                    button,
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                  ),
+                ),
               ),
               if (!failed && era != null) ...[
                 const SizedBox(height: 4),
                 TextButton(
                   key: const Key('continue-related'),
                   onPressed: () => context.push('/learn/library/${era.id}'),
-                  child: Text('相关资料 · ${era.title}'),
+                  child: Text(
+                    '相关资料 · ${era.title}',
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                  ),
                 ),
               ],
             ],

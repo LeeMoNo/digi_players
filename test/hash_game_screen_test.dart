@@ -59,6 +59,17 @@ void main() {
         );
   });
 
+  test('各关积分与进度键', () {
+    expect(HashGameLogic.pointsForLevel(0), 1);
+    expect(HashGameLogic.pointsForLevel(1), 2);
+    expect(HashGameLogic.pointsForLevel(2), 3);
+    expect(HashGameLogic.pointsActionKey(0), 'game_hash_complete');
+    expect(HashGameLogic.pointsActionKey(1), 'game_hash_level_2');
+    expect(HashGameLogic.pointsActionKey(2), 'game_hash_level_3');
+    expect(HashGameLogic.progressFlagForLevel(0), 'game_done_game_hash');
+    expect(HashGameLogic.progressFlagForLevel(2), 'game_done_game_hash_l3');
+  });
+
   test('Nonce 只接受最多 6 位数字', () {
     expect(HashGameLogic.parseNonce(''), 0);
     expect(HashGameLogic.parseNonce('0'), 0);
@@ -81,13 +92,13 @@ void main() {
     );
     expect(find.text('满足条件！'), findsOneWidget);
     expect(
-      tester.getRect(find.text('下一关 →')).bottom,
+      tester.getRect(find.text('解锁下一步')).bottom,
       lessThanOrEqualTo(size.height),
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('键盘弹出后页面不溢出，过关按钮仍可点到', (tester) async {
+  testWidgets('键盘弹出后页面不溢出，可点到升级挑战', (tester) async {
     const size = Size(360, 800);
     const keyboard = 320.0;
     await _showGame(
@@ -97,12 +108,13 @@ void main() {
       padding: const FakeViewPadding(top: 24),
     );
     expect(tester.takeException(), isNull);
-    final button = tester.getRect(find.text('下一关 →'));
+    final button = tester.getRect(find.text('继续挑战升级关 →'));
     expect(button.bottom, lessThanOrEqualTo(size.height - keyboard));
 
-    await tester.tap(find.text('下一关 →'));
+    await tester.tap(find.text('继续挑战升级关 →'));
     await tester.pump();
-    expect(find.textContaining('关卡 2/3'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.textContaining('升级挑战  2/3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -146,19 +158,19 @@ void main() {
     expect(find.text('Nonce：0'), findsOneWidget);
   });
 
-  testWidgets('已通过第一关后再次进入，直接显示第二关', (tester) async {
+  testWidgets('已通过第一关后再次进入，直接显示升级挑战第二关', (tester) async {
     stored = const HashGameCheckpoint(level: 1, solvedNonces: [7]);
 
     await _showGame(tester, const Size(360, 800));
-    await _waitForLevel(tester, 2);
+    await _waitForChallenge(tester, 2);
 
-    expect(find.textContaining('关卡 2/3'), findsOneWidget);
-    expect(find.textContaining('关卡 1/3'), findsNothing);
+    expect(find.textContaining('升级挑战  2/3'), findsOneWidget);
+    expect(find.textContaining('通关关 1/3'), findsNothing);
   });
 }
 
-Future<void> _waitForLevel(WidgetTester tester, int level) async {
-  final label = '关卡 $level/3';
+Future<void> _waitForChallenge(WidgetTester tester, int level) async {
+  final label = '升级挑战  $level/3';
   for (var i = 0; i < 40; i++) {
     if (find.textContaining(label).evaluate().isNotEmpty) return;
     await tester.pump(const Duration(milliseconds: 20));

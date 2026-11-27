@@ -32,7 +32,8 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-/// 401 时用 DID 重新签名换取 JWT，并重试一次原请求
+/// 401 时用 DID 重新签名换取 JWT，并重试一次原请求。
+/// 「动态码不正确」也会返回 401（error=Invalid code），那是业务失败，不要当成登录过期去弹二次验证。
 class _UnauthorizedRetryInterceptor extends Interceptor {
   static const _retryKey = 'auth_retried';
 
@@ -52,6 +53,14 @@ class _UnauthorizedRetryInterceptor extends Interceptor {
     // 登录相关接口不要自动重试
     final path = err.requestOptions.path;
     if (path.startsWith('/auth/')) {
+      handler.next(err);
+      return;
+    }
+
+    // 二次验证码错误 ≠ 令牌失效
+    final body = err.response?.data;
+    final apiError = body is Map ? body['error']?.toString() : null;
+    if (apiError == 'Invalid code') {
       handler.next(err);
       return;
     }

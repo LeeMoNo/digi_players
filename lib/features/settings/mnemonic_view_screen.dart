@@ -1,6 +1,7 @@
 // lib/features/settings/mnemonic_view_screen.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
@@ -150,9 +151,20 @@ class _State extends State<MnemonicViewScreen> {
       TextField(
         controller: _totpCode,
         enabled: !_checkingTotp,
+        // 动态码 6 位；备用码形如 AB12-CD34，最长 9
+        maxLength: 9,
+        keyboardType: TextInputType.visiblePassword,
+        textCapitalization: TextCapitalization.characters,
+        autocorrect: false,
+        enableSuggestions: false,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
+        ],
         decoration: const InputDecoration(
           labelText: '动态码或备用码',
+          hintText: '6 位动态码或备用码',
           border: OutlineInputBorder(),
+          counterText: '',
         ),
         onSubmitted: (_) => _checkTotp(),
       ),

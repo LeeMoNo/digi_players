@@ -10,7 +10,9 @@ import '../../core/progress/progress_store.dart';
 import '../../core/router/app_back_button.dart';
 import '../../core/providers/app_settings_provider.dart';
 import '../../core/storage/secure_storage.dart';
+import '../../core/ui/user_facing_error.dart';
 import '../games/games_home_screen.dart';
+import '../home/daily_task_card.dart';
 import '../learn/learn_home_screen.dart';
 import '../points/profile_repository.dart';
 import 'language_screen.dart';
@@ -196,12 +198,12 @@ class SettingsScreen extends ConsumerWidget {
       await ApiClient.dio.delete('/user/account');
     } on DioException catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('没删成，请检查网络后重试')),
+        const SnackBar(content: Text(UserFacingError.deleteAccountFailed)),
       );
       return;
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('没删成，请检查网络后重试')),
+        const SnackBar(content: Text(UserFacingError.deleteAccountFailed)),
       );
       return;
     }
@@ -221,6 +223,7 @@ class SettingsScreen extends ConsumerWidget {
     ProfileCache.clear();
     LearnHomeCache.clear();
     GamesHomeCache.clear();
+    DailyQuizCache.clear();
     await SecureStorage.clearAll();
   }
 }

@@ -3,15 +3,23 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../api/api_client.dart';
 import '../storage/secure_storage.dart';
 
-const progressNotSavedMessage = '没记上，请再试一次';
+export '../ui/user_facing_error.dart' show progressNotSavedMessage;
 
 const progressFlags = [
   'completed_ch_001',
   'completed_ch_002',
   'game_done_game_block',
   'game_done_game_hash',
+  'game_done_game_hash_l2',
+  'game_done_game_hash_l3',
   'game_done_game_p2p',
   'game_done_game_antiscam',
+  'game_done_game_approve',
+  'game_done_game_stablecoin',
+  'game_done_game_custody',
+  'game_done_game_multisig',
+  // G9 牌照与上下架（练习场旁路，不计入主路径六步）
+  'game_done_game_listing',
 ];
 
 class ProgressNotSaved implements Exception {

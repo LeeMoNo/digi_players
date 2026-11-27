@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUp(DailyQuizCache.clear);
+  tearDown(DailyQuizCache.clear);
+
   test('两项会随机换位，不会永远对调', () {
     final seen = <String>{};
     for (var seed = 0; seed < 40; seed++) {

@@ -264,7 +264,7 @@ class _State extends State<ProfileScreen> with RouteAware {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '点累计积分可查看获取记录。',
+                  '完成内容会记一笔，点此查看记录',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(height: 20),
@@ -295,12 +295,17 @@ class _State extends State<ProfileScreen> with RouteAware {
                 ),
                 const SizedBox(height: 20),
 
-                // ── 排行榜 ────────────────────────────────
+                // ── 排行榜（只比学习完成量，不暗示奖励/空投）──
                 Text(
                   '排行榜 Top 20',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '按完成记录排序',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
                 if (_rankings.isEmpty)

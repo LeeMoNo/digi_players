@@ -5,6 +5,7 @@ import 'package:digi_players/core/layout/reading_width.dart';
 import 'package:digi_players/core/layout/window_layout.dart';
 import 'package:digi_players/core/progress/progress_store.dart';
 import 'package:digi_players/core/storage/secure_storage.dart';
+import 'package:digi_players/core/ui/user_facing_error.dart';
 import 'package:digi_players/features/auth/intro_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -72,26 +73,23 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
       if (mounted) context.go(route);
     } on DioException catch (e) {
       if (mounted) {
-        final data = e.response?.data;
-        String? raw = switch (data) {
-          Map<String, dynamic>() =>
-            (data['error'] ?? data['message'])?.toString(),
-          String() => data,
-          _ => null,
-        };
-        // Cloudflare 边缘异常（Worker 抛错）会返回纯文本 "error code: 1101" 等
-        final msg = (raw != null && raw.contains('error code:'))
-            ? '服务端暂时异常（${raw.trim()}），请稍后再试或联系管理员'
-            : (raw ?? '网络错误，请重试');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('认证失败：$msg')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserFacingError.from(e, fallback: UserFacingError.network),
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('错误：$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserFacingError.from(e, fallback: UserFacingError.service),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isAuthenticating = false);
@@ -176,15 +174,32 @@ class _MnemonicScreenState extends State<MnemonicScreen> {
                 ],
 
                 const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: (_isAuthenticating) ? null : _onConfirm,
-                  child: _isAuthenticating
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('我已抄写完毕，进入应用'),
+                Semantics(
+                  button: true,
+                  enabled: !_isAuthenticating,
+                  label: '我已抄写完毕，进入应用',
+                  excludeSemantics: true,
+                  child: FilledButton(
+                    onPressed: _isAuthenticating ? null : _onConfirm,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: _isAuthenticating
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            '我已抄写完毕，进入应用',
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                          ),
+                  ),
                 ),
               ],
             ),

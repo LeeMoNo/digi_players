@@ -5,8 +5,9 @@ import 'package:flutter/foundation.dart';
 import '../../core/api/api_client.dart';
 import '../../core/avatar_image.dart';
 import '../../core/avatar_url.dart';
-import '../../core/storage/secure_storage.dart';
 import '../../core/models/badge.dart';
+import '../../core/progress/progress_store.dart';
+import '../../core/storage/secure_storage.dart';
 import '../learn/learn_path.dart';
 
 class ProfileSnapshot {
@@ -159,7 +160,15 @@ class ProfileRepository {
   Future<Set<String>> getUnlockedBadgeIds() async {
     final did = await SecureStorage.getDID();
     final progress = await readLearnPathProgress();
+    final approve = await ProgressStore.hasFlag('game_done_game_approve');
+    final stablecoin = await ProgressStore.hasFlag(
+      'game_done_game_stablecoin',
+    );
+    final custody = await ProgressStore.hasFlag('game_done_game_custody');
+    final multisig = await ProgressStore.hasFlag('game_done_game_multisig');
+    final listing = await ProgressStore.hasFlag('game_done_game_listing');
 
+    final hashMaster = await ProgressStore.hasFlag('game_done_game_hash_l3');
     return unlockedBadgeIdsFromProgress(
       hasDid: did != null && did.isNotEmpty,
       chapter1: progress.chapter1,
@@ -168,6 +177,12 @@ class ProfileRepository {
       hash: progress.hash,
       p2p: progress.p2p,
       antiscam: progress.antiscam,
+      hashMaster: hashMaster,
+      approve: approve,
+      stablecoin: stablecoin,
+      custody: custody,
+      multisig: multisig,
+      listing: listing,
     );
   }
 }

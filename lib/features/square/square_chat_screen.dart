@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
-import '../../core/router/app_back_button.dart';
 import '../../core/display_name.dart';
+import '../../core/router/app_back_button.dart';
+import '../../core/ui/user_facing_error.dart';
 import 'square_provider.dart';
 import 'square_repository.dart';
 
@@ -107,7 +108,9 @@ class _SquareChatScreenState extends ConsumerState<SquareChatScreen> {
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('连接失败：$e')),
+              error: (_, __) => const Center(
+                child: Text(UserFacingError.connectionFailed),
+              ),
               data: (messages) {
                 if (messages.isEmpty) {
                   return const Center(

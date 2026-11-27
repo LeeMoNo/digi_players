@@ -8,8 +8,9 @@ import '../../core/api/api_client.dart';
 import '../../core/avatar_image.dart';
 import '../../core/avatar_url.dart';
 import '../../core/layout/reading_width.dart';
-import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout.dart';
+import '../../core/router/app_back_button.dart';
+import '../../core/ui/user_facing_error.dart';
 import '../points/profile_repository.dart';
 import '../points/user_avatar.dart';
 import 'avatar_crop_screen.dart';
@@ -154,11 +155,16 @@ class _AvatarScreenState extends State<AvatarScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _bytes = previousBytes);
-      _snack('保存失败：${_friendlyError(e)}');
+      _snack(_avatarError(e));
     } catch (e) {
       if (!mounted) return;
       setState(() => _bytes = previousBytes);
-      _snack('保存失败：$e');
+      // 本地裁图/格式错误保留可读原因；网络类走统一短句。
+      _snack(
+        e is DioException
+            ? _avatarError(e)
+            : '保存失败：$e',
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -179,10 +185,10 @@ class _AvatarScreenState extends State<AvatarScreen> {
       _snack('已恢复默认头像');
     } on DioException catch (e) {
       if (!mounted) return;
-      _snack('保存失败：${_friendlyError(e)}');
-    } catch (e) {
+      _snack(_avatarError(e));
+    } catch (_) {
       if (!mounted) return;
-      _snack('保存失败：$e');
+      _snack(UserFacingError.loadFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -194,15 +200,12 @@ class _AvatarScreenState extends State<AvatarScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String _friendlyError(DioException e) {
-    if (e.response?.statusCode == 401) {
-      return '登录状态没能刷新，请检查网络后再试';
-    }
+  String _avatarError(DioException e) {
     if (e.response?.statusCode == 429) return '换得太频繁，请一小时后再试';
     final data = e.response?.data;
-    if (data is Map && data['error'] != null) return data['error'].toString();
-    if (data is String && data.isNotEmpty) return data;
-    return '网络错误，请稍后重试';
+    final raw = data is Map ? data['error']?.toString() : null;
+    if (raw == 'Unsupported image type') return '这种图片格式不支持，请换一张';
+    return UserFacingError.from(e);
   }
 
   @override

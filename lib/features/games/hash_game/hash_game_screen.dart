@@ -25,14 +25,16 @@ class _State extends State<HashGameScreen> {
   int _nonce = 0;
   String _hash = '';
   bool _levelDone = false;
-  bool _gameDone = false;
+  /// 结算页：第一关解锁主路径，或打完可选挑战。
+  _ResultKind? _resultKind;
   final TextEditingController _nonceCtrl = TextEditingController(text: '0');
   bool _syncingField = false;
   LearnPathStep? _next;
   List<BadgeItem> _earned = const [];
   bool _loading = false;
   bool _saveFailed = false;
-  String? _seed; // 服务端签发的 seed
+  bool _pathAlreadyCleared = false;
+  int? _lastAwardedPoints;
 
   // 记录每关成功时的 nonce，用于 result_data
   final List<int> _solvedNonces = [];
@@ -42,7 +44,6 @@ class _State extends State<HashGameScreen> {
     super.initState();
     _recompute(notify: false);
     _restoreProgress();
-    _fetchSeed();
   }
 
   @override
@@ -51,33 +52,25 @@ class _State extends State<HashGameScreen> {
     super.dispose();
   }
 
-  /// 有中途进度就跳到下一关；没有或读失败则留在当前关。
+  /// 有中途进度就跳到对应关；没有或读失败则留在当前关。
   Future<void> _restoreProgress() async {
+    final already = await ProgressStore.hasFlag('game_done_game_hash');
     final checkpoint = await HashGameProgress.load();
-    if (!mounted || checkpoint.level <= 0) return;
+    if (!mounted) return;
     setState(() {
-      _level = checkpoint.level;
-      _solvedNonces
-        ..clear()
-        ..addAll(checkpoint.solvedNonces);
-      _nonce = 0;
-      _levelDone = false;
+      _pathAlreadyCleared = already;
+      if (checkpoint.level > 0) {
+        _level = checkpoint.level;
+        _solvedNonces
+          ..clear()
+          ..addAll(checkpoint.solvedNonces);
+        _nonce = 0;
+        _levelDone = false;
+      }
     });
-    _writeNonceField('0');
-    _recompute();
-  }
-
-  // 游戏开始时从服务端拿 seed
-  Future<void> _fetchSeed() async {
-    try {
-      final res = await ApiClient.dio.post(
-        '/game/start',
-        data: {'action_key': 'game_hash_complete'},
-      );
-      if (!mounted) return;
-      setState(() => _seed = res.data['seed'] as String);
-    } catch (_) {
-      // seed 获取失败不阻断游戏，只影响积分上报
+    if (checkpoint.level > 0) {
+      _writeNonceField('0');
+      _recompute();
     }
   }
 
@@ -146,82 +139,202 @@ class _State extends State<HashGameScreen> {
     _applyNonce(parsed, fromField: true);
   }
 
-  void _nextLevel() {
-    _solvedNonces.add(_nonce);
+  void _recordCurrentNonce() {
+    if (_solvedNonces.length == _level) {
+      _solvedNonces.add(_nonce);
+    } else if (_solvedNonces.length > _level) {
+      _solvedNonces[_level] = _nonce;
+    }
+  }
 
-    if (_level < HashGameLogic.levels.length - 1) {
-      _level++;
+  /// 第一关：记下主路径进度，并进入结算（可再去挑战）。
+  Future<void> _clearPathGate() async {
+    _recordCurrentNonce();
+    await _persistPathClear(showResult: true);
+  }
+
+  /// 第一关后直接进入升级挑战（同样尽量先放行主路径）。
+  Future<void> _goChallengeAfterGate() async {
+    _recordCurrentNonce();
+    if (!_pathAlreadyCleared) {
+      // 记进度失败也不挡挑战；主路径要靠「解锁下一步」再试
+      await _persistPathClear(showResult: false);
+    }
+    if (!mounted) return;
+    setState(() {
+      _level = 1;
       _nonce = 0;
+      _levelDone = false;
+      _resultKind = null;
+    });
+    _writeNonceField('0');
+    HashGameProgress.save(
+      HashGameCheckpoint(level: 1, solvedNonces: List.of(_solvedNonces)),
+    );
+    _recompute();
+  }
+
+  Future<void> _nextChallenge() async {
+    _recordCurrentNonce();
+    final cleared = _level;
+    setState(() => _loading = true);
+
+    final alreadyMaster = await ProgressStore.hasFlag(
+      HashGameLogic.progressFlagForLevel(2),
+    );
+    try {
+      await _awardLevel(cleared);
+    } on ProgressNotSaved {
+      if (!mounted) return;
+      if (cleared >= HashGameLogic.levels.length - 1) {
+        setState(() {
+          _loading = false;
+          _saveFailed = true;
+          _resultKind = _ResultKind.challengeComplete;
+          _earned = const [];
+          _next = null;
+        });
+      } else {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(progressNotSavedMessage)),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    if (cleared < HashGameLogic.levels.length - 1) {
+      setState(() {
+        _level = cleared + 1;
+        _nonce = 0;
+        _levelDone = false;
+        _loading = false;
+        _saveFailed = false;
+      });
       _writeNonceField('0');
-      // 进度已在通关时写入；这里再写一次，保证与当前关卡一致。
       HashGameProgress.save(
         HashGameCheckpoint(level: _level, solvedNonces: List.of(_solvedNonces)),
       );
       _recompute();
-    } else {
-      // 三关全过，上报积分
-      _submitScore();
-    }
-  }
-
-  Future<void> _submitScore() async {
-    setState(() {
-      _loading = true;
-      _gameDone = true;
-      _saveFailed = false;
-    });
-
-    final already = await ProgressStore.hasFlag('game_done_game_hash');
-    try {
-      await ProgressStore.markFlag('game_done_game_hash');
-      await HashGameProgress.clear();
-    } on ProgressNotSaved {
-      if (!mounted) return;
-      setState(() {
-        _saveFailed = true;
-        _next = null;
-        _earned = const [];
-        _loading = false;
-      });
       return;
     }
 
-    if (_seed != null) {
-      try {
-        final did = await SecureStorage.getDID() ?? '';
-        final resultData = _solvedNonces.join(',');
-        final proof = buildProofHash(
-          did: did,
-          actionKey: 'game_hash_complete',
-          seed: _seed!,
-          resultData: resultData,
-        );
+    await HashGameProgress.clear();
+    if (!mounted) return;
+    setState(() {
+      _resultKind = _ResultKind.challengeComplete;
+      _next = null;
+      _earned = badgesJustEarned(
+        practice: 'hash',
+        alreadyDone: alreadyMaster,
+        pathComplete: false,
+      );
+      _loading = false;
+      _saveFailed = false;
+      _lastAwardedPoints = HashGameLogic.pointsForLevel(cleared);
+    });
+  }
 
-        await ApiClient.dio.post(
-          '/points/award',
-          data: {
-            'action_key': 'game_hash_complete',
-            'proof_hash': proof,
-            'result_data': resultData,
-          },
-        );
-      } catch (_) {
-        // 积分上报失败不影响进度
+  /// 记下本关进度并发对应积分。已记过则跳过。
+  Future<void> _awardLevel(int levelIndex) async {
+    final flag = HashGameLogic.progressFlagForLevel(levelIndex);
+    final already = await ProgressStore.hasFlag(flag);
+    if (!already) {
+      await ProgressStore.markFlag(flag);
+    }
+
+    if (levelIndex == 0) {
+      await HashGameProgress.save(
+        HashGameCheckpoint(level: 1, solvedNonces: List.of(_solvedNonces)),
+      );
+    }
+
+    if (already) {
+      _lastAwardedPoints = null;
+      return;
+    }
+
+    final points = HashGameLogic.pointsForLevel(levelIndex);
+    _lastAwardedPoints = points;
+    final actionKey = HashGameLogic.pointsActionKey(levelIndex);
+    try {
+      final start = await ApiClient.dio.post(
+        '/game/start',
+        data: {'action_key': actionKey},
+      );
+      final seed = start.data['seed'] as String?;
+      if (seed == null || seed.isEmpty) return;
+
+      final did = await SecureStorage.getDID() ?? '';
+      final resultData = _solvedNonces.length > levelIndex
+          ? '${_solvedNonces[levelIndex]}'
+          : '$_nonce';
+      final proof = buildProofHash(
+        did: did,
+        actionKey: actionKey,
+        seed: seed,
+        resultData: resultData,
+      );
+      await ApiClient.dio.post(
+        '/points/award',
+        data: {
+          'action_key': actionKey,
+          'proof_hash': proof,
+          'result_data': resultData,
+        },
+      );
+    } catch (_) {
+      // 积分上报失败不影响进度
+    }
+  }
+
+  Future<bool> _persistPathClear({required bool showResult}) async {
+    if (showResult) {
+      setState(() {
+        _loading = true;
+        _resultKind = _ResultKind.pathGate;
+        _saveFailed = false;
+        _lastAwardedPoints = null;
+      });
+    }
+
+    final already = await ProgressStore.hasFlag(
+      HashGameLogic.progressFlagForLevel(0),
+    );
+    try {
+      await _awardLevel(0);
+    } on ProgressNotSaved {
+      if (!mounted) return false;
+      if (showResult) {
+        setState(() {
+          _saveFailed = true;
+          _next = null;
+          _earned = const [];
+          _loading = false;
+        });
       }
+      return false;
     }
 
     final progress = await readLearnPathProgress();
-    if (!mounted) return;
+    if (!mounted) return false;
     setState(() {
-      _saveFailed = false;
-      _next = practiceClearDestination(practice: 'hash', progress: progress);
-      _earned = badgesJustEarned(
-        practice: 'hash',
-        alreadyDone: already,
-        pathComplete: progress.isComplete,
-      );
-      _loading = false;
+      _pathAlreadyCleared = true;
+      if (showResult) {
+        _saveFailed = false;
+        _next = practiceClearDestination(practice: 'hash', progress: progress);
+        // 第一关不发挖矿徽章；若因此走完六步，仍可亮「路径完成」
+        _earned = badgesJustEarned(
+          practice: '',
+          alreadyDone: already,
+          pathComplete: progress.isComplete,
+        );
+        _loading = false;
+      }
     });
+    return true;
   }
 
   /// 给长串插入可断点，避免窄屏把哈希或交易数据撑出屏幕。
@@ -263,16 +376,21 @@ class _State extends State<HashGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_gameDone) return _buildResult();
+    if (_resultKind != null) return _buildResult();
 
     final difficulty = HashGameLogic.difficulties[_level];
     final txData = HashGameLogic.levels[_level];
+    final challenge = HashGameLogic.isChallengeLevel(_level);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: appBarLeading(context),
-        title: Text('哈希碰碰乐  关卡 ${_level + 1}/3'),
+        title: Text(
+          challenge
+              ? '升级挑战  ${_level + 1}/3'
+              : '哈希碰碰乐  通关关 1/3',
+        ),
       ),
       backgroundColor: const Color(0xFF0F1117),
       body: FoldSide(
@@ -301,10 +419,23 @@ class _State extends State<HashGameScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '目标：哈希开头出现 $difficulty 个零',
+                                challenge
+                                    ? '升级挑战：哈希开头出现 $difficulty 个零'
+                                    : '通关目标：哈希开头出现 $difficulty 个零',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                challenge
+                                    ? '不影响主路径，想刷再来。'
+                                    : '过这一关即可继续主路径；后两关是可选升级挑战。',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                  height: 1.35,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -440,10 +571,31 @@ class _State extends State<HashGameScreen> {
                 ),
                 if (_levelDone) ...[
                   const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: _nextLevel,
-                    child: Text(_level < 2 ? '下一关 →' : '完成游戏'),
-                  ),
+                  if (_level == HashGameLogic.pathClearLevel) ...[
+                    FilledButton(
+                      onPressed: _loading ? null : _clearPathGate,
+                      child: const Text('解锁下一步'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _loading ? null : _goChallengeAfterGate,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                      ),
+                      child: const Text('继续挑战升级关 →'),
+                    ),
+                  ] else
+                    FilledButton(
+                      onPressed: _loading ? null : _nextChallenge,
+                      child: Text(
+                        _loading
+                            ? '正在记下…'
+                            : _level < HashGameLogic.levels.length - 1
+                            ? '下一挑战 →'
+                            : '完成挑战',
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -454,6 +606,7 @@ class _State extends State<HashGameScreen> {
   }
 
   Widget _buildResult() {
+    final isPath = _resultKind == _ResultKind.pathGate;
     return Scaffold(
       backgroundColor: const Color(0xFF0F1117),
       body: FoldSide(
@@ -472,26 +625,30 @@ class _State extends State<HashGameScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.military_tech,
-                        color: Colors.amber,
+                      Icon(
+                        isPath ? Icons.check_circle : Icons.military_tech,
+                        color: isPath ? Colors.greenAccent : Colors.amber,
                         size: 80,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        '三关全通！',
-                        style: TextStyle(
+                      Text(
+                        isPath ? '第一关过了' : '升级挑战全通！',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        '你刚刚体验了真实的挖矿过程。\n'
-                        '比特币矿工每秒要做数万亿次这样的计算。',
+                      Text(
+                        isPath
+                            ? '主路径可以继续了。\n后两关是升级挑战，想刷随时回来。'
+                            : '你刚刚体验了更高难度的挖矿计算。\n比特币矿工每秒要做数万亿次这样的运算。',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, height: 1.6),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          height: 1.6,
+                        ),
                       ),
                       if (_loading) ...[
                         const SizedBox(height: 16),
@@ -504,22 +661,52 @@ class _State extends State<HashGameScreen> {
                         ),
                       ] else ...[
                         const SizedBox(height: 12),
-                        const Text(
-                          '进度已记下',
-                          style: TextStyle(color: Colors.green),
+                        Text(
+                          isPath
+                              ? (_lastAwardedPoints == null
+                                    ? '进度已记下'
+                                    : '进度已记下 · +$_lastAwardedPoints 积分')
+                              : (_lastAwardedPoints == null
+                                    ? '挑战进度已记下'
+                                    : '挑战完成 · +$_lastAwardedPoints 积分'),
+                          style: const TextStyle(color: Colors.green),
                         ),
                         EarnedBadgeNote(badges: _earned, onDark: true),
                       ],
                       const SizedBox(height: 32),
                       if (_saveFailed)
                         FilledButton(
-                          onPressed: _loading ? null : _submitScore,
+                          onPressed: _loading
+                              ? null
+                              : isPath
+                              ? () => _persistPathClear(showResult: true)
+                              : _nextChallenge,
                           child: const Text('再试一次'),
                         )
-                      else if (_next != null)
+                      else if (isPath) ...[
+                        if (_next != null)
+                          FilledButton(
+                            onPressed: () => context.go(_next!.route),
+                            child: Text(_next!.button),
+                          ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _resultKind = null;
+                              _level = 1;
+                              _nonce = 0;
+                              _levelDone = false;
+                            });
+                            _writeNonceField('0');
+                            _recompute();
+                          },
+                          child: const Text('继续挑战升级关'),
+                        ),
+                      ] else
                         FilledButton(
-                          onPressed: () => context.go(_next!.route),
-                          child: Text(_next!.button),
+                          onPressed: () => context.go('/learn'),
+                          child: const Text('回到学习'),
                         ),
                     ],
                   ),
@@ -532,3 +719,5 @@ class _State extends State<HashGameScreen> {
     );
   }
 }
+
+enum _ResultKind { pathGate, challengeComplete }

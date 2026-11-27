@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/router/app_back_button.dart';
+import '../../core/ui/user_facing_error.dart';
 
 class PointsHistoryItem {
   const PointsHistoryItem({
@@ -56,13 +57,27 @@ String pointsActionTitle(String actionKey) {
     case 'totp_enable':
       return '开启二次验证';
     case 'game_hash_complete':
-      return '完成哈希练习';
+      return '哈希碰碰乐 · 第1关';
+    case 'game_hash_level_2':
+      return '哈希碰碰乐 · 第2关';
+    case 'game_hash_level_3':
+      return '哈希碰碰乐 · 第3关';
     case 'game_block_complete':
       return '完成积木练习';
     case 'game_antiscam_complete':
       return '完成防骗练习';
     case 'game_p2p_complete':
       return '完成节点传信练习';
+    case 'game_approve_complete':
+      return '完成授权雷达练习';
+    case 'game_stablecoin_complete':
+      return '完成稳定币天平练习';
+    case 'game_custody_complete':
+      return '完成钥匙归属练习';
+    case 'game_multisig_complete':
+      return '完成多签核对练习';
+    case 'game_listing_complete':
+      return '完成牌照与上下架练习';
     default:
       return actionKey.isEmpty ? '积分记录' : actionKey;
   }
@@ -109,7 +124,7 @@ class _PointsHistoryScreenState extends State<PointsHistoryScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = '没能加载积分记录，请下拉重试';
+        _error = UserFacingError.loadFailed;
       });
     }
   }
@@ -129,9 +144,9 @@ class _PointsHistoryScreenState extends State<PointsHistoryScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingMore = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('没能继续加载')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(UserFacingError.loadFailed)),
+      );
     }
   }
 
@@ -216,21 +231,24 @@ class _PointsHistoryScreenState extends State<PointsHistoryScreen> {
             );
           }
           final item = _items[index];
+          final scheme = Theme.of(context).colorScheme;
+          // onTap 让 ListTile 启用 Material 涟漪，避免点按毫无反馈
           return ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+            onTap: () {},
             title: Text(pointsActionTitle(item.actionKey)),
             subtitle: Text(
               _formatTime(item.createdAt),
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: scheme.onSurfaceVariant,
               ),
             ),
             trailing: Text(
               '+${item.points}',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.primary,
+                color: scheme.primary,
               ),
             ),
           );
@@ -268,6 +286,6 @@ Future<PointsHistoryPage> _loadPage({int? before}) async {
       hasMore: data['has_more'] == true,
     );
   } on DioException catch (e) {
-    throw Exception(e.message ?? '网络错误');
+    throw Exception(UserFacingError.from(e, fallback: UserFacingError.network));
   }
 }

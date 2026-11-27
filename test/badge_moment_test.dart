@@ -47,6 +47,6 @@ void main() {
       ),
     );
     expect(find.text('获得「挖矿体验者」'), findsOneWidget);
-    expect(find.textContaining('零越多，就越难'), findsOneWidget);
+    expect(find.textContaining('零越多就越难'), findsOneWidget);
   });
 }

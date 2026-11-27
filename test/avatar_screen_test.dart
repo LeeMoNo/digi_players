@@ -160,7 +160,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('保存失败：Unsupported image type'), findsOneWidget);
+    expect(find.text('这种图片格式不支持，请换一张'), findsOneWidget);
     expect(ProfileCache.latest?.avatarUrl, 'https://example.com/old.jpg');
   });
 

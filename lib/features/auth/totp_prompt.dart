@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/ui/user_facing_error.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -74,9 +76,9 @@ class _TotpLoginDialogState extends State<_TotpLoginDialog> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _error = _message(e));
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = '没能完成验证：$e');
+      setState(() => _error = UserFacingError.service);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -88,7 +90,7 @@ class _TotpLoginDialogState extends State<_TotpLoginDialog> {
     final raw = data is Map ? data['error']?.toString() : null;
     if (raw == 'Ticket expired') return '验证已超时，请重新登录';
     if (raw == 'Invalid code') return '动态码不正确';
-    return '没能完成验证，请再试一次';
+    return UserFacingError.from(e, fallback: '没能完成验证，请再试一次');
   }
 
   @override
@@ -105,10 +107,20 @@ class _TotpLoginDialogState extends State<_TotpLoginDialog> {
             controller: _code,
             autofocus: true,
             enabled: !_busy,
+            // 动态码 6 位；备用码形如 AB12-CD34，最长 9
+            maxLength: 9,
+            keyboardType: TextInputType.visiblePassword,
             textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            enableSuggestions: false,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
+            ],
             decoration: const InputDecoration(
               labelText: '动态码或备用码',
+              hintText: '6 位动态码或备用码',
               border: OutlineInputBorder(),
+              counterText: '',
             ),
             onSubmitted: (_) => _submit(),
           ),

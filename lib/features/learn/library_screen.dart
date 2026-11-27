@@ -121,9 +121,9 @@ class EraDetailScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (era.stablecoin) ...[
+            if (era.paragraphs.isNotEmpty) ...[
               const SizedBox(height: 16),
-              for (final paragraph in HomeContent.stablecoinParagraphs) ...[
+              for (final paragraph in era.paragraphs) ...[
                 Text(paragraph, style: const TextStyle(height: 1.6)),
                 const SizedBox(height: 12),
               ],
@@ -156,11 +156,25 @@ class EraDetailScreen extends StatelessWidget {
               Text('当时发生了什么', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               for (final event in events)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(event.title),
-                  subtitle: Text(
-                    '${event.yearMonth} · ${HomeContent.timelineTypeLabel(event.type)}',
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${event.yearMonth} · ${HomeContent.timelineTypeLabel(event.type)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      if (event.blurb != null) ...[
+                        const SizedBox(height: 4),
+                        Text(event.blurb!, style: const TextStyle(height: 1.5)),
+                      ],
+                    ],
                   ),
                 ),
             ],
@@ -170,8 +184,28 @@ class EraDetailScreen extends StatelessWidget {
               const SizedBox(height: 8),
               for (final term in terms)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text('${term.term}：${term.definition}'),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${term.term}：${term.definition}',
+                        style: const TextStyle(height: 1.5),
+                      ),
+                      if (term.context != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          term.context!,
+                          style: TextStyle(
+                            height: 1.5,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
             ],
             for (final flow in flows) ...[

@@ -3,6 +3,7 @@ import 'package:digi_players/core/layout/window_layout.dart';
 import 'package:digi_players/core/layout/window_layout_host.dart';
 import 'package:digi_players/features/home/main_shell.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,23 +26,24 @@ void main() {
     expect(find.text('我的'), findsOneWidget);
     expect(find.text('游戏'), findsNothing);
     expect(find.text('广场'), findsNothing);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(const Key('main-bottom-bar')), findsOneWidget);
     expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(tester.getTopLeft(find.text('学习')).dy, greaterThan(400));
 
     router.go('/profile');
     await tester.pump();
     await tester.pump();
+    expect(find.text('profile-body'), findsOneWidget);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      2,
+      tester.getSemantics(find.text('我的')).hasFlag(SemanticsFlag.isSelected),
+      isTrue,
     );
 
     router.go('/square');
     await tester.pump();
     await tester.pump();
     expect(find.text('square-body'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byKey(const Key('main-bottom-bar')), findsNothing);
   });
 
   test('底栏只出现在学习、练习、我的三个主页面', () {
@@ -54,6 +56,11 @@ void main() {
     expect(showsMainNavigation('/square'), isFalse);
     expect(showsMainNavigation('/learn/chapter/ch_001'), isFalse);
     expect(showsMainNavigation('/games/hash'), isFalse);
+    expect(showsMainNavigation('/games/approve'), isFalse);
+    expect(showsMainNavigation('/games/stablecoin'), isFalse);
+    expect(showsMainNavigation('/games/custody'), isFalse);
+    expect(showsMainNavigation('/games/multisig'), isFalse);
+    expect(showsMainNavigation('/games/listing'), isFalse);
     expect(showsMainNavigation('/game/block-puzzle'), isFalse);
   });
 
@@ -76,7 +83,7 @@ void main() {
       sizeClass: HorizontalSizeClass.compact,
     );
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(const Key('main-bottom-bar')), findsOneWidget);
     expect(find.byKey(const Key('main-rail')), findsNothing);
     expect(find.text('学习'), findsOneWidget);
     expect(find.text('练习'), findsOneWidget);
@@ -91,7 +98,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('main-rail')), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byKey(const Key('main-bottom-bar')), findsNothing);
     expect(tester.getSize(find.byKey(const Key('main-rail'))).width, 80);
 
     await tester.tap(find.text('练习'));
@@ -136,7 +143,7 @@ void main() {
     );
     expect(tester.getTopLeft(find.text('学习')).dx, greaterThanOrEqualTo(40));
     expect(
-      tester.getTopLeft(find.byType(NavigationBar)).dx,
+      tester.getTopLeft(find.byKey(const Key('main-bottom-bar'))).dx,
       greaterThanOrEqualTo(40),
     );
 

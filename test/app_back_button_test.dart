@@ -72,6 +72,11 @@ void main() {
     await _openAndBack(tester, router, '/settings/terms', '用户协议');
     await _openAndBack(tester, router, '/games/hash', '哈希碰碰乐  关卡 1/3');
     await _openAndBack(tester, router, '/games/antiscam', '反诈训练营  1/');
+    await _openAndBack(tester, router, '/games/approve', '授权雷达  1/');
+    await _openAndBack(tester, router, '/games/stablecoin', '稳定币天平');
+    await _openAndBack(tester, router, '/games/custody', '钥匙在谁手里');
+    await _openAndBack(tester, router, '/games/multisig', '多签核对台');
+    await _openAndBack(tester, router, '/games/listing', '牌照与上下架');
     await _openAndBack(tester, router, '/game/p2p', 'P2P 模拟器  关卡 1/3');
     await _openAndBack(tester, router, '/game/block-puzzle', '区块链拼图');
     await _openAndBack(tester, router, '/learn/chapter/ch_001', '章节');

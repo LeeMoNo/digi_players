@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
-import '../../core/router/app_back_button.dart';
 import '../../core/layout/window_layout.dart';
+import '../../core/router/app_back_button.dart';
+import '../../core/ui/user_facing_error.dart';
 
 class NicknameScreen extends StatefulWidget {
   const NicknameScreen({super.key});
@@ -61,30 +62,23 @@ class _State extends State<NicknameScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
-        final msg = _friendlyError(e);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('保存失败：$msg')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(UserFacingError.from(e))),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('保存失败：$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserFacingError.from(e, fallback: UserFacingError.loadFailed),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  String _friendlyError(DioException e) {
-    if (e.response?.statusCode == 401) {
-      return '登录状态没能刷新，请检查网络后再试';
-    }
-    final data = e.response?.data;
-    if (data is Map && data['error'] != null) return data['error'].toString();
-    if (data is String && data.isNotEmpty) return data;
-    return '网络错误，请稍后重试';
   }
 
   @override

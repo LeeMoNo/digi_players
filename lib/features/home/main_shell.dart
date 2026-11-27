@@ -93,7 +93,6 @@ class _MainShellState extends State<MainShell> {
     final wide = layout.wide;
     final hideRail = wide && hidesMainRail(path);
     final showBottomBar = !wide && showsMainNavigation(path);
-    final scheme = Theme.of(context).colorScheme;
 
     return SafeArea(
       top: false,
@@ -116,19 +115,10 @@ class _MainShellState extends State<MainShell> {
               )
             : widget.child,
         bottomNavigationBar: showBottomBar
-            ? NavigationBar(
-                backgroundColor: scheme.surface,
-                indicatorColor: scheme.primaryContainer,
+            ? _MainBottomBar(
                 selectedIndex: index,
-                onDestinationSelected: (i) => context.go(_tabs[i].path),
-                destinations: [
-                  for (final tab in _tabs)
-                    NavigationDestination(
-                      icon: Icon(tab.icon),
-                      selectedIcon: Icon(tab.activeIcon),
-                      label: tab.label,
-                    ),
-                ],
+                tabs: _tabs,
+                onSelected: (i) => context.go(_tabs[i].path),
               )
             : null,
       ),
@@ -219,6 +209,10 @@ class _RailDestination extends StatelessWidget {
     final iconWidget = Icon(selected ? activeIcon : icon, color: color);
     final labelWidget = Text(
       label,
+      textAlign: TextAlign.center,
+      softWrap: true,
+      maxLines: 2,
+      overflow: TextOverflow.clip,
       style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
     );
     return Padding(
@@ -236,7 +230,7 @@ class _RailDestination extends StatelessWidget {
                     children: [
                       iconWidget,
                       const SizedBox(width: 12),
-                      labelWidget,
+                      Flexible(child: labelWidget),
                     ],
                   )
                 : Column(
@@ -247,6 +241,118 @@ class _RailDestination extends StatelessWidget {
                       labelWidget,
                     ],
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 底栏三项：大字号下允许换行，不裁成「…」。
+class _MainBottomBar extends StatelessWidget {
+  const _MainBottomBar({
+    required this.selectedIndex,
+    required this.tabs,
+    required this.onSelected,
+  });
+
+  final int selectedIndex;
+  final List<({IconData icon, IconData activeIcon, String label, String path})>
+  tabs;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final minHeight = 64.0 + (scale - 1).clamp(0.0, 1.2) * 28;
+
+    return Material(
+      key: const Key('main-bottom-bar'),
+      color: scheme.surface,
+      elevation: 3,
+      child: SafeArea(
+        top: false,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: minHeight),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Row(
+              children: [
+                for (var i = 0; i < tabs.length; i++)
+                  Expanded(
+                    child: _BottomDestination(
+                      icon: tabs[i].icon,
+                      activeIcon: tabs[i].activeIcon,
+                      label: tabs[i].label,
+                      selected: i == selectedIndex,
+                      onTap: () => onSelected(i),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomDestination extends StatelessWidget {
+  const _BottomDestination({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: selected ? scheme.secondaryContainer : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Icon(selected ? activeIcon : icon, color: color),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                maxLines: 2,
+                overflow: TextOverflow.clip,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

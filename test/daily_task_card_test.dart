@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUp(DailyQuizCache.clear);
+  tearDown(DailyQuizCache.clear);
+
   testWidgets('接口失败时仍占位，文案可读并可重试', (tester) async {
     var loads = 0;
     await tester.pumpWidget(
@@ -72,5 +75,86 @@ void main() {
 
     expect(find.text('今天的题完成了'), findsOneWidget);
     expect(find.textContaining('积分'), findsNothing);
+  });
+
+  testWidgets('今日已完成后再次进入不再拉题', (tester) async {
+    var loads = 0;
+    final quiz = {
+      'q_id': 'daily-1',
+      'question': {'zh_CN': '选一个'},
+      'options': {
+        'zh_CN': ['甲', '乙'],
+      },
+    };
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DailyTaskCard(
+            loader: () async {
+              loads++;
+              return quiz;
+            },
+            submitAnswer: (_, __) async => true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('甲'));
+    await tester.pump();
+    await tester.tap(find.text('提交'));
+    await tester.pumpAndSettle();
+    expect(loads, 1);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DailyTaskCard(
+            loader: () async {
+              loads++;
+              return quiz;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(loads, 1);
+    expect(find.text('今日已完成'), findsOneWidget);
+    expect(find.text('今天的题完成了'), findsOneWidget);
+  });
+
+  testWidgets('同一天未完成时复用缓存不重复拉', (tester) async {
+    var loads = 0;
+    final quiz = {
+      'q_id': 'daily-1',
+      'question': {'zh_CN': '选一个'},
+      'options': {
+        'zh_CN': ['甲', '乙'],
+      },
+    };
+
+    Widget card() => MaterialApp(
+      home: Scaffold(
+        body: DailyTaskCard(
+          loader: () async {
+            loads++;
+            return quiz;
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(card());
+    await tester.pumpAndSettle();
+    expect(loads, 1);
+    expect(find.text('选一个'), findsOneWidget);
+
+    await tester.pumpWidget(card());
+    await tester.pumpAndSettle();
+    expect(loads, 1);
+    expect(find.text('选一个'), findsOneWidget);
   });
 }

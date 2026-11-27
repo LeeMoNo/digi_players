@@ -193,6 +193,7 @@ void main() {
 
     expect(find.text('1998–2009 · 共有的账本'), findsOneWidget);
     expect(find.text('2014 · 稳定币为什么看起来像美元'), findsOneWidget);
+    expect(find.text('2025–2026 · 最大所、牌照与上下架'), findsOneWidget);
     expect(find.text('比特币（中文）'), findsOneWidget);
     expect(find.text('加密货币发展年史'), findsNothing);
   });

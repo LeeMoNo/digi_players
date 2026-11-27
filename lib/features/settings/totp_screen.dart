@@ -9,6 +9,7 @@ import '../../core/api/api_client.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/layout/window_layout.dart';
 import '../../core/router/app_back_button.dart';
+import '../../core/ui/user_facing_error.dart';
 
 /// 与服务端 `SETUP_TTL` 一致：二维码 15 分钟有效。
 const setupTtl = Duration(minutes: 15);
@@ -131,9 +132,9 @@ class _TotpScreenState extends State<TotpScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _error = _message(e));
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = '没能生成密钥：$e');
+      setState(() => _error = UserFacingError.service);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -165,9 +166,9 @@ class _TotpScreenState extends State<TotpScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _error = _message(e));
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = '没能开启：$e');
+      setState(() => _error = UserFacingError.service);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -190,9 +191,9 @@ class _TotpScreenState extends State<TotpScreen> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() => _error = _message(e));
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = '没能关闭：$e');
+      setState(() => _error = UserFacingError.service);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -206,8 +207,7 @@ class _TotpScreenState extends State<TotpScreen> {
     if (raw == 'Setup expired') {
       return '二维码已过期（有效期 15 分钟），请点「重新生成二维码」后再扫';
     }
-    if (e.response?.statusCode == 401) return '登录状态没能刷新，请检查网络后再试';
-    return '没能完成，请再试一次';
+    return UserFacingError.from(e, fallback: '没能完成，请再试一次');
   }
 
   @override
@@ -328,9 +328,20 @@ class _TotpScreenState extends State<TotpScreen> {
         TextField(
           controller: _code,
           enabled: !_busy,
+          // 动态码 6 位；备用码形如 AB12-CD34，最长 9
+          maxLength: 9,
+          keyboardType: TextInputType.visiblePassword,
+          textCapitalization: TextCapitalization.characters,
+          autocorrect: false,
+          enableSuggestions: false,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
+          ],
           decoration: const InputDecoration(
             labelText: '动态码或备用码',
+            hintText: '6 位动态码或备用码',
             border: OutlineInputBorder(),
+            counterText: '',
           ),
         ),
         const SizedBox(height: 12),

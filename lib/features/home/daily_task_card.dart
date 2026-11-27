@@ -3,10 +3,47 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
+import '../../core/ui/user_facing_error.dart';
 import '../../core/utils/shuffled_options.dart';
 
 typedef DailyAnswerSubmit =
     Future<bool> Function(Object? qId, int selectedIndex);
+
+/// 进程内缓存：同一 UTC 日不重复拉题；今日已完成则直接跳过网络。
+class DailyQuizCache {
+  static String? utcDay;
+  static Map<String, dynamic>? data;
+  static bool completed = false;
+
+  static String todayUtcKey([DateTime? now]) {
+    final d = (now ?? DateTime.now()).toUtc();
+    return '${d.year}-${d.month}-${d.day}';
+  }
+
+  static void ensureToday([DateTime? now]) {
+    final day = todayUtcKey(now);
+    if (utcDay == day) return;
+    utcDay = day;
+    data = null;
+    completed = false;
+  }
+
+  static void remember(
+    Map<String, dynamic>? quiz, {
+    required bool completedToday,
+    DateTime? now,
+  }) {
+    ensureToday(now);
+    data = quiz;
+    completed = completedToday;
+  }
+
+  static void clear() {
+    utcDay = null;
+    data = null;
+    completed = false;
+  }
+}
 
 /// 每日一题。
 ///
@@ -47,7 +84,37 @@ class _State extends State<DailyTaskCard> {
     _load(resetUi: false);
   }
 
-  Future<void> _load({bool resetUi = true}) async {
+  Future<void> _load({bool resetUi = true, bool forceNetwork = false}) async {
+    DailyQuizCache.ensureToday();
+
+    // 今日已完成：不再打接口（重试除外）。
+    if (!forceNetwork && DailyQuizCache.completed) {
+      if (!mounted) return;
+      setState(() {
+        _quiz = DailyQuizCache.data;
+        _shown = _shuffle(DailyQuizCache.data);
+        _completedToday = true;
+        _answeredCorrect = true;
+        _selectedDisplay = null;
+        _loading = false;
+      });
+      return;
+    }
+
+    // 同一天未完成：复用已拉到的题，避免进出学习页反复请求。
+    if (!forceNetwork &&
+        !DailyQuizCache.completed &&
+        DailyQuizCache.data != null) {
+      if (!mounted) return;
+      setState(() {
+        _quiz = DailyQuizCache.data;
+        _shown = _shuffle(DailyQuizCache.data);
+        _completedToday = false;
+        _loading = false;
+      });
+      return;
+    }
+
     if (resetUi) {
       setState(() {
         _loading = true;
@@ -63,10 +130,13 @@ class _State extends State<DailyTaskCard> {
           ? await widget.loader!()
           : await _loadFromApi();
       if (!mounted) return;
+      final done = data?['completed_today'] == true;
+      DailyQuizCache.remember(data, completedToday: done);
       setState(() {
         _quiz = data;
         _shown = _shuffle(data);
-        _completedToday = data?['completed_today'] == true;
+        _completedToday = done;
+        if (done) _answeredCorrect = true;
         _loading = false;
       });
     } catch (_) {
@@ -107,7 +177,10 @@ class _State extends State<DailyTaskCard> {
       if (!mounted) return;
       setState(() {
         _answeredCorrect = correct;
-        if (correct) _completedToday = true;
+        if (correct) {
+          _completedToday = true;
+          DailyQuizCache.remember(_quiz, completedToday: true);
+        }
       });
     } catch (_) {
     } finally {
@@ -141,7 +214,10 @@ class _State extends State<DailyTaskCard> {
   @override
   Widget build(BuildContext context) {
     final shown = _shown;
-    final unavailable = !_loading && (_questionText.isEmpty || shown == null);
+    final unavailable =
+        !_loading &&
+        !_completedToday &&
+        (_questionText.isEmpty || shown == null);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -204,11 +280,11 @@ class _State extends State<DailyTaskCard> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           else if (unavailable || shown == null) ...[
-            const Text('今天的题暂时取不到'),
+            const Text(UserFacingError.dailyQuizUnavailable),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
-                onPressed: _load,
+                onPressed: () => _load(forceNetwork: true),
                 child: const Text('重试'),
               ),
             ),

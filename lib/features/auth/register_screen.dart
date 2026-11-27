@@ -6,6 +6,7 @@ import '../../core/did/did_generator.dart';
 import '../../core/layout/reading_width.dart';
 import '../../core/layout/window_layout.dart';
 import '../../core/storage/secure_storage.dart';
+import '../../core/ui/user_facing_error.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -40,9 +41,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('生成失败：$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserFacingError.from(e, fallback: UserFacingError.loadFailed),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isGenerating = false);
@@ -61,9 +66,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo 占位
-                const Icon(Icons.fingerprint, size: 80),
-                const SizedBox(height: 32),
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.asset(
+                      'assets/icon/app_icon_1024.png',
+                      key: const Key('register-logo'),
+                      width: 96,
+                      height: 96,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
 
                 Text(
                   'DigiPlayers',
@@ -78,15 +93,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 48),
 
-                FilledButton(
-                  onPressed: _isGenerating ? null : _onCreateIdentity,
-                  child: _isGenerating
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('创建我的数字身份'),
+                Semantics(
+                  button: true,
+                  enabled: !_isGenerating,
+                  label: '创建我的数字身份',
+                  excludeSemantics: true,
+                  child: FilledButton(
+                    onPressed: _isGenerating ? null : _onCreateIdentity,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: _isGenerating
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            '创建我的数字身份',
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                          ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Wrap(

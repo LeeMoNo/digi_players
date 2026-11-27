@@ -1,8 +1,13 @@
 import 'package:digi_players/features/games/antiscam_game/antiscam_screen.dart';
+import 'package:digi_players/features/games/approve_radar/approve_radar_screen.dart';
 import 'package:digi_players/features/games/block_puzzle/block_puzzle_screen.dart';
 import 'package:digi_players/features/games/games_home_screen.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
 import 'package:digi_players/features/games/p2p_game/p2p_game_screen.dart';
+import 'package:digi_players/features/games/key_custody/key_custody_screen.dart';
+import 'package:digi_players/features/games/listing_desk/listing_desk_screen.dart';
+import 'package:digi_players/features/games/multisig_desk/multisig_desk_screen.dart';
+import 'package:digi_players/features/games/stablecoin_scale/stablecoin_scale_screen.dart';
 import 'package:digi_players/features/home/fraud_screen.dart';
 import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
@@ -128,6 +133,26 @@ GoRouter createAppRouter({
               GoRoute(
                 path: 'antiscam',
                 builder: (_, __) => const AntiscamScreen(),
+              ),
+              GoRoute(
+                path: 'approve',
+                builder: (_, __) => const ApproveRadarScreen(),
+              ),
+              GoRoute(
+                path: 'stablecoin',
+                builder: (_, __) => const StablecoinScaleScreen(),
+              ),
+              GoRoute(
+                path: 'custody',
+                builder: (_, __) => const KeyCustodyScreen(),
+              ),
+              GoRoute(
+                path: 'multisig',
+                builder: (_, __) => const MultisigDeskScreen(),
+              ),
+              GoRoute(
+                path: 'listing',
+                builder: (_, __) => const ListingDeskScreen(),
               ),
             ],
           ),

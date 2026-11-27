@@ -6,9 +6,14 @@ import 'package:digi_players/core/layout/window_layout_host.dart';
 import 'package:digi_players/core/models/chapter.dart';
 import 'package:digi_players/features/auth/register_screen.dart';
 import 'package:digi_players/features/games/antiscam_game/antiscam_screen.dart';
+import 'package:digi_players/features/games/approve_radar/approve_radar_screen.dart';
 import 'package:digi_players/features/games/block_puzzle/block_puzzle_screen.dart';
 import 'package:digi_players/features/games/hash_game/hash_game_screen.dart';
 import 'package:digi_players/features/games/p2p_game/p2p_game_screen.dart';
+import 'package:digi_players/features/games/key_custody/key_custody_screen.dart';
+import 'package:digi_players/features/games/listing_desk/listing_desk_screen.dart';
+import 'package:digi_players/features/games/multisig_desk/multisig_desk_screen.dart';
+import 'package:digi_players/features/games/stablecoin_scale/stablecoin_scale_screen.dart';
 import 'package:digi_players/features/home/main_shell.dart';
 import 'package:digi_players/features/home/widgets/home_widgets.dart';
 import 'package:digi_players/features/learn/chapter_screen.dart';
@@ -99,6 +104,11 @@ void main() {
       '/games/hash',
       '/game/p2p',
       '/games/antiscam',
+      '/games/approve',
+      '/games/stablecoin',
+      '/games/custody',
+      '/games/multisig',
+      '/games/listing',
     ]) {
       router.go(path);
       await tester.pump();
@@ -184,6 +194,27 @@ GoRouter _gameRouter() {
           GoRoute(
             path: '/games/antiscam',
             builder: (_, __) => const AntiscamScreen(fetchSeed: false),
+          ),
+          GoRoute(
+            path: '/games/approve',
+            builder: (_, __) => const ApproveRadarScreen(fetchSeed: false),
+          ),
+          GoRoute(
+            path: '/games/stablecoin',
+            builder: (_, __) =>
+                const StablecoinScaleScreen(fetchSeed: false),
+          ),
+          GoRoute(
+            path: '/games/custody',
+            builder: (_, __) => const KeyCustodyScreen(fetchSeed: false),
+          ),
+          GoRoute(
+            path: '/games/multisig',
+            builder: (_, __) => const MultisigDeskScreen(fetchSeed: false),
+          ),
+          GoRoute(
+            path: '/games/listing',
+            builder: (_, __) => const ListingDeskScreen(fetchSeed: false),
           ),
         ],
       ),

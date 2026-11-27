@@ -28,25 +28,36 @@ Set<String> unlockedBadgeIdsFromProgress({
   required bool hash,
   required bool p2p,
   required bool antiscam,
+  /// 哈希三关全通才发「挖矿体验者」；主路径只需 [hash]（第一关）。
+  bool hashMaster = false,
+  bool approve = false,
+  bool stablecoin = false,
+  bool custody = false,
+  bool multisig = false,
+  bool listing = false,
 }) {
   final unlocked = <String>{};
   if (hasDid) unlocked.add('badge_did');
   if (chapter1) unlocked.add('badge_ch001');
   if (chapter2) unlocked.add('badge_ch002');
-  if (hash) unlocked.add('badge_hash_game');
+  if (hashMaster) unlocked.add('badge_hash_game');
   if (antiscam) unlocked.add('badge_antiscam');
   if (block) unlocked.add('badge_block_game');
   if (p2p) unlocked.add('badge_p2p_game');
+  if (approve) unlocked.add('badge_approve');
+  if (stablecoin) unlocked.add('badge_stablecoin');
+  if (custody) unlocked.add('badge_custody');
+  if (multisig) unlocked.add('badge_multisig');
+  // 旁路徽章：不进下面的 pathSteps，故不影响「路径完成」。
+  if (listing) unlocked.add('badge_listing');
 
-  const pathSteps = {
-    'badge_ch001',
-    'badge_ch002',
-    'badge_block_game',
-    'badge_hash_game',
-    'badge_p2p_game',
-    'badge_antiscam',
-  };
-  if (unlocked.containsAll(pathSteps)) {
+  // 路径完成：练习以第一关放行为准，不要求哈希升级挑战徽章。
+  if (chapter1 &&
+      chapter2 &&
+      block &&
+      hash &&
+      p2p &&
+      antiscam) {
     unlocked.add(pathCompleteBadgeId);
   }
   return unlocked;
@@ -78,7 +89,7 @@ const allBadges = [
   BadgeItem(
     id: 'badge_hash_game',
     name: '挖矿体验者',
-    description: '你弄懂了：哈希前面要出现的零越多，就越难。',
+    description: '你弄懂了：哈希前面要出现的零越多就越难——三关全通才拿到这枚。',
     icon: Icons.hardware,
     color: Colors.orange,
   ),
@@ -110,6 +121,41 @@ const allBadges = [
     icon: Icons.hub,
     color: Colors.teal,
   ),
+  BadgeItem(
+    id: 'badge_approve',
+    name: '授权守门人',
+    description: '你弄懂了：连接不等于授权，额度决定对方能转走多少。',
+    icon: Icons.radar,
+    color: Colors.deepPurple,
+  ),
+  BadgeItem(
+    id: 'badge_stablecoin',
+    name: '锚定守望',
+    description: '你弄懂了：锚定是承诺，储备决定承诺能不能兑。',
+    icon: Icons.balance,
+    color: Colors.blueGrey,
+  ),
+  BadgeItem(
+    id: 'badge_custody',
+    name: '钥匙归属',
+    description: '你弄懂了：账户里显示有币，不等于链上地址由你控制。',
+    icon: Icons.key,
+    color: Colors.brown,
+  ),
+  BadgeItem(
+    id: 'badge_multisig',
+    name: '多签核对',
+    description: '你弄懂了：多签防的是单点失窃，防不了界面被骗。',
+    icon: Icons.fact_check,
+    color: Colors.indigo,
+  ),
+  BadgeItem(
+    id: 'badge_listing',
+    name: '牌照眼',
+    description: '你弄懂了：能交易不等于受你所在地法保护，下架先砸流动性。',
+    icon: Icons.gavel,
+    color: Colors.blueGrey,
+  ),
 ];
 
 BadgeItem? badgeById(String id) {
@@ -128,9 +174,15 @@ List<BadgeItem> badgesJustEarned({
   if (alreadyDone) return const [];
   final practiceId = switch (practice) {
     'block' => 'badge_block_game',
+    // 哈希徽章只在三关全通时由调用方传入 practice: 'hash'
     'hash' => 'badge_hash_game',
     'p2p' => 'badge_p2p_game',
     'antiscam' => 'badge_antiscam',
+    'approve' => 'badge_approve',
+    'stablecoin' => 'badge_stablecoin',
+    'custody' => 'badge_custody',
+    'multisig' => 'badge_multisig',
+    'listing' => 'badge_listing',
     _ => null,
   };
   final earned = <BadgeItem>[];

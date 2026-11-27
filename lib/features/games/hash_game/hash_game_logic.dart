@@ -40,16 +40,61 @@ class HashGameLogic {
   /// 每关对应的难度
   static const List<int> difficulties = [1, 2, 3];
 
+  /// 第一关过关即可继续主路径；后两关是可选升级挑战。
+  static const int pathClearLevel = 0;
+
+  static bool isChallengeLevel(int levelIndex) => levelIndex > pathClearLevel;
+
+  /// 第 1/2/3 关积分：1 / 2 / 3。
+  static int pointsForLevel(int levelIndex) {
+    switch (levelIndex) {
+      case 0:
+        return 1;
+      case 1:
+        return 2;
+      case 2:
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  static String pointsActionKey(int levelIndex) {
+    switch (levelIndex) {
+      case 0:
+        return 'game_hash_complete';
+      case 1:
+        return 'game_hash_level_2';
+      case 2:
+        return 'game_hash_level_3';
+      default:
+        throw ArgumentError('Unknown hash level: $levelIndex');
+    }
+  }
+
+  static String progressFlagForLevel(int levelIndex) {
+    switch (levelIndex) {
+      case 0:
+        return 'game_done_game_hash';
+      case 1:
+        return 'game_done_game_hash_l2';
+      case 2:
+        return 'game_done_game_hash_l3';
+      default:
+        throw ArgumentError('Unknown hash level: $levelIndex');
+    }
+  }
+
   /// 每关的提示：这个 nonce 附近一定有解（降低挫败感）
   /// 实际上就是预算好的参考答案区间
   static String hint(int levelIndex) {
     switch (levelIndex) {
       case 0:
-        return '提示：Nonce 在 0 ~ 100 之间就能找到';
+        return '提示：Nonce 在 0 ~ 100 之间就能找到。过这一关即可继续主路径。';
       case 1:
-        return '提示：Nonce 在 100 ~ 2000 之间';
+        return '升级挑战：Nonce 在 100 ~ 2000 之间';
       case 2:
-        return '提示：Nonce 在 1000 ~ 50000 之间，耐心找';
+        return '升级挑战：Nonce 在 1000 ~ 50000 之间，耐心找';
       default:
         return '';
     }

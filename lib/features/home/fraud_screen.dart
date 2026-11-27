@@ -22,6 +22,24 @@ class FraudScreen extends StatelessWidget {
         if (scam.id != highlightScamId) scam,
     ];
 
+    final scamSection = <Widget>[
+      const _SectionHeader(title: '常见套路', icon: Icons.warning_amber_outlined),
+      for (final scam in scams)
+        _ScamCard(
+          scam: scam,
+          highlighted: scam.id == highlightScamId,
+        ),
+    ];
+
+    final checklistSection = <Widget>[
+      const _SectionHeader(title: '安全清单', icon: Icons.verified_user_outlined),
+      for (final item in HomeContent.fraudChecklist) _ChecklistTile(item: item),
+    ];
+
+    // 带 ?scam= 进来时，先看到对应套路，避免清单把高亮条目挤出首屏。
+    final leading = highlightScamId != null ? scamSection : checklistSection;
+    final trailing = highlightScamId != null ? checklistSection : scamSection;
+
     return Scaffold(
       appBar: AppBar(
         leading: appBarLeading(context),
@@ -31,20 +49,11 @@ class FraudScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _SectionHeader(title: '安全清单', icon: Icons.verified_user_outlined),
-            ...HomeContent.fraudChecklist.map(
-              (item) => _ChecklistTile(item: item),
-            ),
+            ...leading,
             const SizedBox(height: 24),
-            _SectionHeader(title: '常见套路', icon: Icons.warning_amber_outlined),
-            ...scams.map(
-              (scam) => _ScamCard(
-                scam: scam,
-                highlighted: scam.id == highlightScamId,
-              ),
-            ),
+            ...trailing,
             const SizedBox(height: 24),
-            _SectionHeader(title: '识别信号', icon: Icons.search_outlined),
+            const _SectionHeader(title: '识别信号', icon: Icons.search_outlined),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -68,7 +77,7 @@ class FraudScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            _SectionHeader(title: '出事怎么办', icon: Icons.emergency_outlined),
+            const _SectionHeader(title: '出事怎么办', icon: Icons.emergency_outlined),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
